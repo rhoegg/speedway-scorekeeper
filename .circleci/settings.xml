@@ -7,6 +7,11 @@
       <password>${env.CONNECTED_APP_CLIENT_ID}~?~${env.CONNECTED_APP_CLIENT_SECRET}</password>
       <id>anypoint-exchange-v3</id>
     </server>
+    <server>
+      <id>mulesoft-private</id>
+      <username>${env.MULESOFT_EE_REPO_USERNAME}</username>
+      <password>${env.MULESOFT_EE_REPO_PASSWORD}</password>
+    </server>
   </servers>
   <profiles>
     <profile>
