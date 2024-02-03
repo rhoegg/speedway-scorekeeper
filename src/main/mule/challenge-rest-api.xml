@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:validation="http://www.mulesoft.org/schema/mule/validation"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:racer-api="http://www.mulesoft.org/schema/mule/racer-api" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/racer-api http://www.mulesoft.org/schema/mule/racer-api/current/mule-racer-api.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/validation http://www.mulesoft.org/schema/mule/validation/current/mule-validation.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd">
+	<sub-flow name="scoreRestApi" doc:id="04f01678-9e72-419d-ba0e-7ff290375047">
+		<set-variable value="#[payload.endpoint]" doc:name="endpoint" doc:id="0568e30e-081d-4724-af7b-cf038528c5ec" variableName="endpoint"/>
+		<set-variable value="#[(1 to payload.laps) map {lap: $, token: uuid()}]" doc:name="laps" doc:id="f6e04707-cf82-43f2-9842-25cbb0b9f767" variableName="laps" />
+		<set-variable value="#[payload.racerId]" doc:name="racerId" doc:id="497b7bab-f1f5-4be1-b652-1feb7efb1bbe" variableName="racerId" />
+		<set-variable value="#[uuid()]" doc:name="token" doc:id="a8f7d762-8928-488b-9612-1bc1fa94dda1" variableName="token" />
+		<logger level="DEBUG" doc:name="DEBUG" doc:id="254c352b-16fa-47c9-9af2-9e165953bd14" message='#["Starting race for racer $(vars.racerId) with $(payload.laps) laps"]' category="challenge.rest-api" />
+		<set-variable value="#[now()]" doc:name="officialStart" doc:id="68fa157c-7f61-4519-a519-e98d279212ad" variableName="officialStart"/>
+		<ee:transform doc:name="start race request" doc:id="84224723-c3d3-4c3e-8633-1fbf02b8cead">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	token: vars.token
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<http:request method="POST" doc:name="endpoint POST /races" doc:id="b5377c3e-52d0-42a6-b285-cccabb65a46d" url='#["$(vars.endpoint)/races"]'/>
+		<validation:is-true doc:name="check racer ID" doc:id="2bdfb684-c20c-4046-bb75-dcb03933d457" message="incorrect racer ID in Start Race response" expression="#[payload.racerId == vars.racerId]" >
+			<error-mapping sourceType="VALIDATION:INVALID_BOOLEAN" targetType="APP:BADRACER" />
+		</validation:is-true>
+		<set-variable value="#[payload.id]" doc:name="raceId" doc:id="ca6b1832-ed32-48af-a864-7d40c5483331" variableName="raceId"/>
+		<foreach doc:name="For Each lap" doc:id="af525b01-02af-425e-b091-a7ce61859a47" collection="#[vars.laps]">
+			<flow-ref doc:name="lap" doc:id="3044c68f-1655-42e4-95dc-689ceb727932" name="lap" />
+		</foreach>
+		<set-variable value='#[((now() - vars.officialStart) as Number {unit: "nanos"}) / 1000000000]' doc:name="officialTime" doc:id="4bd98f4d-204b-44e0-ab85-c2a97127beb7" variableName="officialTime"/>
+		<ee:transform doc:name="Transform Message" doc:id="452a1b15-fab0-4b7b-9008-ffc8ef8e219f" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	raceId: vars.raceId,
+	racerId: vars.racerId,
+	time: vars.officialTime
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="INFO" doc:id="60edbfb4-f66e-490f-a182-a18d9215e640" message='#["Completed race for racer $(vars.racerId) with $(sizeOf(vars.laps))"]' category="challenge.rest-api" />
+	</sub-flow>
+	<sub-flow name="lap" doc:id="61668087-95e9-4e90-b1f5-3cf16f967cae" >
+		<logger level="DEBUG" doc:name="DEBUG" doc:id="afdf985d-decf-4fec-ac7b-41b3e9255f6c" message='#["Starting lap $(payload.lap) for racer $(vars.racerId)"]' category="challenge.rest-api.lap" />
+		<ee:transform doc:name="lap input" doc:id="1bed1b10-8d97-4e90-a2bb-cf70119d0254">
+				<ee:message>
+					<ee:set-payload><![CDATA[%dw 2.0
+output text/plain
+---
+payload.token]]></ee:set-payload>
+				</ee:message>
+			</ee:transform>
+		<http:request method="POST" doc:name="endpoint POST /races/{id}/lap" doc:id="3c294809-685b-4bbd-8935-150d47a4f145" url='#["$(vars.endpoint)/races/$(vars.raceId)/lap"]'/>
+		<validation:is-true doc:name="check racer ID" doc:id="0a9d8f5d-4c43-43ef-95dd-24e6402d1648" expression="#[payload.racerId == vars.racerId]" message="bad racer ID in lap response" >
+			<error-mapping sourceType="VALIDATION:INVALID_BOOLEAN" targetType="APP:BADRACER" />
+		</validation:is-true>
+		<validation:is-true doc:name="check token" doc:id="996b7141-2045-41d3-8634-05dbc1657578" message="bad token in lap response" expression="#[payload.token == vars.token]" >
+			<error-mapping sourceType="VALIDATION:INVALID_BOOLEAN" targetType="APP:BADTOKEN" />
+		</validation:is-true>
+		<set-variable value="#[payload.token]" doc:name="token" doc:id="848b3cf9-2c1c-4704-ac58-883e74d54032" variableName="token" />
+	</sub-flow>
+</mule>

@@ -1,0 +1,4 @@
+%dw 2.0
+
+type auto_61668087_95e9_4e90_b1f5_3cf16f967cae_Input_Variables_laps = Array<{|  lap: Number,   token: String|}>
+

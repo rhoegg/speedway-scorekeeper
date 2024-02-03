@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:munit="http://www.mulesoft.org/schema/mule/munit" xmlns:munit-tools="http://www.mulesoft.org/schema/mule/munit-tools"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xsi:schemaLocation="
+		http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+		http://www.mulesoft.org/schema/mule/munit http://www.mulesoft.org/schema/mule/munit/current/mule-munit.xsd
+		http://www.mulesoft.org/schema/mule/munit-tools  http://www.mulesoft.org/schema/mule/munit-tools/current/mule-munit-tools.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<munit:config name="unit-tests-challenge-rest-api.xml" />
+	<flow name="exampleRacerStart" doc:id="879c6e83-1a28-4cca-bec9-1ebbfb4c5781" >
+		<munit-tools:sleep time="350" doc:name="350ms" doc:id="2715b2e0-5f95-4bca-9d03-6d7b2bb46c5a" />
+		<munit-tools:queue doc:name="token" doc:id="3400594f-a5d9-4f43-ae12-8e4284ac3780" >
+			<munit-tools:value ><![CDATA[#[payload.token]]]></munit-tools:value>
+		</munit-tools:queue>
+		<ee:transform doc:name="response" doc:id="4b8a5e53-203e-4854-a976-07db42e18f2d" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	racerId: "testrace1",
+	raceId: "race1"
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="exampleRacerLap" doc:id="3772324c-5029-4c1c-9e1a-749f065b43b5" >
+		<munit-tools:sleep time="100" doc:name="100ms" doc:id="04419df5-5636-41a1-b5db-88025bf3e4c1" />
+		<munit-tools:queue doc:name="token" doc:id="518ade64-592e-448d-bda1-da00990c0249" />
+		<munit-tools:dequeue doc:name="token" doc:id="69ef7a24-963d-4df5-909a-9175686a9173" target="token"/>
+		<ee:transform doc:name="response" doc:id="31857854-33b3-4c8e-a201-8074c0ca7b3f" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	racerId: "testrace1",
+	token: vars.token
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<munit:test name="scoreRestApi_shouldTimeRaceWithOneLap" doc:id="a8a34949-622d-4c72-9577-2448ae2ae898" >
+		<munit:behavior >
+			<munit-tools:mock-when doc:name="start race" doc:id="468392c2-ac04-464b-b8ee-7f3c7fced8e0" processor="http:request">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="POST" attributeName="method" />
+					<munit-tools:with-attribute whereValue="endpoint POST /races" attributeName="doc:name" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-call flow="exampleRacerStart" />
+			</munit-tools:mock-when>
+			<munit-tools:mock-when doc:name="lap" doc:id="8691b4fe-8615-46dc-8a50-2ef17ee92141" processor="http:request">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="POST" attributeName="method" />
+					<munit-tools:with-attribute whereValue="endpoint POST /races/{id}/lap" attributeName="doc:name" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-call flow="exampleRacerLap" />
+			</munit-tools:mock-when>
+		</munit:behavior>
+		<munit:execution >
+			<ee:transform doc:name="input" doc:id="9ce3743e-145d-4513-84cf-f6a30adf1d3d" >
+				<ee:message >
+					<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	endpoint: "https://mock",
+	racerId: "testrace1",
+	laps: 1
+}]]></ee:set-payload>
+				</ee:message>
+			</ee:transform>
+			<flow-ref doc:name="scoreRestApi" doc:id="5ed9aff1-95e7-4e40-9d5e-e3a14cc56839" name="scoreRestApi" />
+		</munit:execution>
+		<munit:validation >
+			<munit-tools:assert doc:name="Assert time" doc:id="523b21a8-d664-4e9e-bec2-467540cfe1b4" >
+				<munit-tools:that ><![CDATA[#[import * from dw::test::Asserts 
+ ---
+payload.time must beGreaterThan(0.45)]]]></munit-tools:that>
+			</munit-tools:assert>
+		</munit:validation>
+	</munit:test>
+	<munit:test name="scoreRestApi_shouldValidateRacerId" doc:id="8fe0bada-f5c7-4cc6-ad3c-4543e884259e" expectedErrorType="APP:BADRACER" expectedErrorDescription="incorrect racer ID in Start Race response">
+		<munit:behavior >
+			<munit-tools:mock-when doc:name="start race" doc:id="d985436b-ecd6-4dd7-905b-3d956dfa94b1" processor="http:request">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="POST" attributeName="method" />
+					<munit-tools:with-attribute whereValue="endpoint POST /races" attributeName="doc:name" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-call flow="exampleRacerStart" />
+			</munit-tools:mock-when>
+			<munit-tools:mock-when doc:name="lap" doc:id="fac41f93-ddba-4d9e-8cd0-9c4b0606c58c" processor="http:request">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="POST" attributeName="method" />
+					<munit-tools:with-attribute whereValue="endpoint POST /races/{id}/lap" attributeName="doc:name" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-call flow="exampleRacerLap" />
+			</munit-tools:mock-when>
+		</munit:behavior>
+		<munit:execution >
+			<ee:transform doc:name="input" doc:id="a6c906c5-b62d-4217-a3e9-11654ad49201" >
+				<ee:message >
+					<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	endpoint: "https://mock",
+	racerId: "marioandretti1",
+	laps: 1
+}]]></ee:set-payload>
+				</ee:message>
+			</ee:transform>
+			<flow-ref doc:name="scoreRestApi" doc:id="161047ad-a4b2-471e-ba86-31d32bd8b204" name="scoreRestApi"/>
+		</munit:execution>
+	</munit:test>
+	<munit:test name="scoreRestApi_shouldValidateToken" doc:id="4ff2f243-f35d-4f8a-9388-d9a6454c7931" expectedErrorType="APP:BADTOKEN" expectedErrorDescription="bad token in lap response">
+		<munit:behavior >
+			<munit-tools:mock-when doc:name="start race" doc:id="7bc24e81-c9ef-4372-9d96-4026e847beb9" processor="http:request">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="POST" attributeName="method" />
+					<munit-tools:with-attribute whereValue="endpoint POST /races" attributeName="doc:name" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-call flow="exampleRacerStart" />
+			</munit-tools:mock-when>
+			<munit-tools:mock-when doc:name="lap" doc:id="08fdd9b5-d864-4d9c-9c2d-8fff38d2c112" processor="http:request">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="POST" attributeName="method" />
+					<munit-tools:with-attribute whereValue="endpoint POST /races/{id}/lap" attributeName="doc:name" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:payload value='#[output application/json&#10;---&#10;{&#10;	racerId: "testrace1",&#10;	token: "wrongtoken"&#10;}]' mediaType="application/json" />
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+		</munit:behavior>
+		<munit:execution >
+			<ee:transform doc:name="input" doc:id="e851d976-4012-4ada-98cb-2e2f42c316bd" >
+				<ee:message >
+					<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	endpoint: "https://mock",
+	racerId: "testrace1",
+	laps: 1
+}]]></ee:set-payload>
+				</ee:message>
+			</ee:transform>
+			<flow-ref doc:name="scoreRestApi" doc:id="ba562f9c-36f4-42c9-89c9-0a9a46213010" name="scoreRestApi"/>
+		</munit:execution>
+	</munit:test>
+
+</mule>

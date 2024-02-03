@@ -1,0 +1,9 @@
+%dw 2.0
+
+type auto_04f01678_9e72_419d_ba0e_7ff290375047_Output_Payload = {
+  raceId: String, 
+  racerId: String, 
+  time: Number, 
+  _?: Any
+}
+
