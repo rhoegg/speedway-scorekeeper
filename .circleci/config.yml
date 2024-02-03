@@ -7,5 +7,5 @@ workflows:
   maven_test:
     jobs:
       - maven/test:
-        command: '-X package'
-        settings_file: ./.circleci/settings.xml
+          command: '-X package'
+          settings_file: ./.circleci/settings.xml
