@@ -33,7 +33,7 @@ output application/json
 			<flow-ref doc:name="lap" doc:id="3044c68f-1655-42e4-95dc-689ceb727932" name="lap" />
 		</foreach>
 		<set-variable value='#[((now() - vars.officialStart) as Number {unit: "nanos"}) / 1000000000]' doc:name="officialTime" doc:id="4bd98f4d-204b-44e0-ab85-c2a97127beb7" variableName="officialTime"/>
-		<ee:transform doc:name="Transform Message" doc:id="452a1b15-fab0-4b7b-9008-ffc8ef8e219f" >
+		<ee:transform doc:name="response" doc:id="452a1b15-fab0-4b7b-9008-ffc8ef8e219f" >
 			<ee:message >
 				<ee:set-payload ><![CDATA[%dw 2.0
 output application/json
@@ -49,19 +49,17 @@ output application/json
 	</sub-flow>
 	<sub-flow name="lap" doc:id="61668087-95e9-4e90-b1f5-3cf16f967cae" >
 		<logger level="DEBUG" doc:name="DEBUG" doc:id="afdf985d-decf-4fec-ac7b-41b3e9255f6c" message='#["Starting lap $(payload.lap) for racer $(vars.racerId)"]' category="challenge.rest-api.lap" />
-		<ee:transform doc:name="lap input" doc:id="1bed1b10-8d97-4e90-a2bb-cf70119d0254">
-				<ee:message>
-					<ee:set-payload><![CDATA[%dw 2.0
+		<http:request method="POST" doc:name="endpoint POST /races/{id}/laps" doc:id="3c294809-685b-4bbd-8935-150d47a4f145" url='#["$(vars.endpoint)/races/$(vars.raceId)/laps"]' target="racerResponse">
+			<http:body ><![CDATA[#[%dw 2.0
 output text/plain
 ---
-payload.token]]></ee:set-payload>
-				</ee:message>
-			</ee:transform>
-		<http:request method="POST" doc:name="endpoint POST /races/{id}/laps" doc:id="3c294809-685b-4bbd-8935-150d47a4f145" url='#["$(vars.endpoint)/races/$(vars.raceId)/laps"]'/>
-		<validation:is-true doc:name="check racer ID" doc:id="0a9d8f5d-4c43-43ef-95dd-24e6402d1648" expression="#[payload.racerId == vars.racerId]" message="bad racer ID in lap response" >
+payload.token]]]></http:body>
+		</http:request>
+		<validation:is-true doc:name="check racer ID" doc:id="0a9d8f5d-4c43-43ef-95dd-24e6402d1648" expression="#[vars.racerResponse.racerId == vars.racerId]" message="bad racer ID in lap response" >
 			<error-mapping sourceType="VALIDATION:INVALID_BOOLEAN" targetType="APP:BADRACER" />
 		</validation:is-true>
-		<validation:is-true doc:name="check token" doc:id="996b7141-2045-41d3-8634-05dbc1657578" message="bad token in lap response" expression="#[payload.token == vars.token]" >
+		<logger level="DEBUG" doc:name="DEBUG" doc:id="9a950309-16fa-484b-85c8-8da6c2ae98af" message='checking racer token #[vars.racerResponse.token] against expected #[vars.token]' category="challenge.rest-api.lap"/>
+		<validation:is-true doc:name="check token" doc:id="996b7141-2045-41d3-8634-05dbc1657578" message="bad token in lap response" expression="#[vars.racerResponse.token == vars.token]" >
 			<error-mapping sourceType="VALIDATION:INVALID_BOOLEAN" targetType="APP:BADTOKEN" />
 		</validation:is-true>
 		<set-variable value="#[payload.token]" doc:name="token" doc:id="848b3cf9-2c1c-4704-ac58-883e74d54032" variableName="token" />
