@@ -57,7 +57,7 @@ output text/plain
 payload.token]]></ee:set-payload>
 				</ee:message>
 			</ee:transform>
-		<http:request method="POST" doc:name="endpoint POST /races/{id}/lap" doc:id="3c294809-685b-4bbd-8935-150d47a4f145" url='#["$(vars.endpoint)/races/$(vars.raceId)/lap"]'/>
+		<http:request method="POST" doc:name="endpoint POST /races/{id}/laps" doc:id="3c294809-685b-4bbd-8935-150d47a4f145" url='#["$(vars.endpoint)/races/$(vars.raceId)/laps"]'/>
 		<validation:is-true doc:name="check racer ID" doc:id="0a9d8f5d-4c43-43ef-95dd-24e6402d1648" expression="#[payload.racerId == vars.racerId]" message="bad racer ID in lap response" >
 			<error-mapping sourceType="VALIDATION:INVALID_BOOLEAN" targetType="APP:BADRACER" />
 		</validation:is-true>
