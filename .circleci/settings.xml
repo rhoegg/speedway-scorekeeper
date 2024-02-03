@@ -30,6 +30,13 @@
           <url>https://repository.mulesoft.org/releases/</url>
         </repository>
       </repositories>
+      <pluginRepositories>
+        <pluginRepository>
+          <id>mulesoft-releases</id>
+          <name>MuleSoft Releases Repository</name>
+          <url>https://repository.mulesoft.org/releases/</url>
+        </pluginRepository>
+      </pluginRepositories>
       <id>mule-dev</id>
     </profile>
     <profile>
