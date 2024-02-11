@@ -1,5 +1,59 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<mule xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
-	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd"></mule>
+<mule xmlns:compression="http://www.mulesoft.org/schema/mule/compression" xmlns:file="http://www.mulesoft.org/schema/mule/file"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/file/current/mule-file.xsd
+http://www.mulesoft.org/schema/mule/compression http://www.mulesoft.org/schema/mule/compression/current/mule-compression.xsd">
+	<flow name="score1brc" doc:id="3e5005c5-80c7-4a3e-b37f-b5dd535fc739" >
+		<set-variable value="#[payload.endpoint]" doc:name="endpoint" doc:id="0cd5dd69-1a38-4662-a6de-f5c612782919" variableName="endpoint"/>
+		<set-variable value="#[payload.racerId]" doc:name="racerId" doc:id="77cb6863-41c0-42f8-8ea9-d79852e8d98c" variableName="racerId"/>
+		<set-variable value="#[payload.count]" doc:name="count" doc:id="b2a8623e-75fd-49ce-84bc-03b7a9cc7ab6" variableName="count"/>
+		<ee:transform doc:name="Transform Message" doc:id="bc5d3e64-3c73-464b-95ed-aaa18e93e725" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	message: "OK"
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="generate1brc" doc:id="b0b0e9b4-ca73-46b9-97ff-f92eb7f1b1f1" >
+		<scheduler doc:name="Scheduler" doc:id="b8336026-9d12-42e3-86dd-685c3fb5898b" >
+			<scheduling-strategy >
+				<fixed-frequency frequency="4" timeUnit="HOURS"/>
+			</scheduling-strategy>
+		</scheduler>
+		<logger level="INFO" doc:name="INFO" doc:id="2206495d-a780-4008-878d-69ae94b1530d" message="Beginning data generation run" category="1brc.generate"/>
+		<set-variable value='#[now() as String { format: "yyyy-MM-dd HH:mm:ss"}]' doc:name="timestamp" doc:id="599698dd-664d-4e07-847b-5ae90ad884f1" variableName="timestamp"/>
+		<ee:transform doc:name="generate" doc:id="e41fd6f0-9399-4874-8fe2-5f4a1ceb67ad">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+import * from dw::app::Generator
+output application/csv deferred=true
+
+
+---
+(1 to 1000000000) map do {
+	var station = randomStation()
+	---
+	{
+		station: station.name,
+		temp: gaussianRandom(station.temperatureAnchor, 12) as String {format: "#.00000"} as Number
+	}	
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<compression:compress doc:name="gzip" doc:id="519e3378-8e0b-4409-91d8-f55758947804">
+			<ee:repeatable-file-store-stream inMemorySize="4" bufferUnit="MB" />
+			<compression:compressor>
+				<compression:gzip-compressor />
+			</compression:compressor>
+		</compression:compress>
+		<file:write doc:name="stations-{timestamp}.csv.gz" doc:id="26c4c0fe-5804-4190-b7a8-e432640bd5d1" path='#["/Users/rhoegg/src/anypointspeedway/tmp/stations-$(vars.timestamp).csv.gz"]' />
+		<logger level="INFO" doc:name="INFO" doc:id="c08836a9-04e5-41a9-9c7a-2a558d876ef8" category="1brc.generate" message='#["Completed 1brc data generation, started $(vars.timestamp)"]'/>
+	</flow>
+</mule>

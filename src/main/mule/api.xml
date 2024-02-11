@@ -140,6 +140,6 @@ output application/json
 		</error-handler>
     </flow>
     <flow name="post:\timed\temperature-averages:application\json:scorekeeper-system-api-config">
-        <logger level="INFO" message="post:\timed\temperature-averages:application\json:scorekeeper-system-api-config" />
+		<flow-ref doc:name="score1brc" doc:id="2156ab7e-d564-4920-ad03-d5c04f516603" name="score1brc"/>
     </flow>
 </mule>
