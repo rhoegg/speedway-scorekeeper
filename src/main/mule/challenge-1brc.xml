@@ -24,11 +24,11 @@ output application/json
 	<flow name="generate1brc" doc:id="b0b0e9b4-ca73-46b9-97ff-f92eb7f1b1f1" >
 		<scheduler doc:name="Scheduler" doc:id="b8336026-9d12-42e3-86dd-685c3fb5898b" >
 			<scheduling-strategy >
-				<fixed-frequency frequency="4" timeUnit="HOURS"/>
+				<fixed-frequency frequency="225" timeUnit="MINUTES"/>
 			</scheduling-strategy>
 		</scheduler>
 		<logger level="INFO" doc:name="INFO" doc:id="2206495d-a780-4008-878d-69ae94b1530d" message="Beginning data generation run" category="1brc.generate"/>
-		<set-variable value='#[now() as String { format: "yyyy-MM-dd HH:mm:ss"}]' doc:name="timestamp" doc:id="599698dd-664d-4e07-847b-5ae90ad884f1" variableName="timestamp"/>
+		<set-variable value='#[now() as String { format: "yyyy-MM-dd HHmmss"}]' doc:name="timestamp" doc:id="599698dd-664d-4e07-847b-5ae90ad884f1" variableName="timestamp"/>
 		<ee:transform doc:name="generate" doc:id="e41fd6f0-9399-4874-8fe2-5f4a1ceb67ad">
 			<ee:message>
 				<ee:set-payload><![CDATA[%dw 2.0
