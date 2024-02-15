@@ -89,6 +89,10 @@ randomTemperatures(vars.count)]]></ee:set-payload>
 		<logger level="INFO" doc:name="Logger" doc:id="a6a95f81-fe83-456a-b7e5-f252dc6c247a" />
 	</sub-flow>
 	<sub-flow name="verify1brcRacerAverages" doc:id="d9e11adc-77fb-4d92-8267-be55746596d6" >
-		<logger level="INFO" doc:name="Logger" doc:id="ac6b72ed-280c-48a6-9fa2-d9f5b2b56761" message="#[vars.averages]" category="1brc.verify"/>
+		<set-variable value="#[import * from dw::app::Verification&#10;---&#10;vars.averages checkRacer vars.racerResponse.averages]" doc:name="find incorrectValues" doc:id="84fcffb1-9b32-4ea3-9d4e-4ffb9fc2a9f7" variableName="incorrectValues"/>
+		<logger level="DEBUG" doc:name="DEBUG" doc:id="ac6b72ed-280c-48a6-9fa2-d9f5b2b56761" message="#[vars.incorrectValues]" category="1brc.verify"/>
+		<validation:is-empty-collection doc:name="incorrectValues" doc:id="8f704062-0ee1-47bd-a806-4519aaffca17" values="#[vars.incorrectValues]" message='#["Failed 1brc validation with $(sizeOf(vars.incorrectValues)) incorrect"]'>
+			<error-mapping sourceType="VALIDATION:NOT_EMPTY_COLLECTION" targetType="APP:INVALID_RACE_RESULT" />
+		</validation:is-empty-collection>
 	</sub-flow>
 </mule>
