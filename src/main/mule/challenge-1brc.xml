@@ -86,10 +86,10 @@ randomTemperatures(vars.count)]]></ee:set-payload>
 		<logger level="INFO" doc:name="Logger" doc:id="f04e5a28-f79c-41a2-b5f3-856dad0eea44" />
 	</sub-flow>
 	<sub-flow name="fudgeTemperatures" doc:id="ac55a50e-eebf-4d79-b327-d02acb7a1e7f" >
-		<logger level="INFO" doc:name="Logger" doc:id="a6a95f81-fe83-456a-b7e5-f252dc6c247a" />
+		<logger level="INFO" doc:name="Logger" doc:id="a6a95f81-fe83-456a-b7e5-f252dc6c247a" category="fdsfds"/>
 	</sub-flow>
 	<sub-flow name="verify1brcRacerAverages" doc:id="d9e11adc-77fb-4d92-8267-be55746596d6" >
-		<set-variable value="#[import * from dw::app::Verification&#10;---&#10;vars.averages checkRacer vars.racerResponse.averages]" doc:name="find incorrectValues" doc:id="84fcffb1-9b32-4ea3-9d4e-4ffb9fc2a9f7" variableName="incorrectValues"/>
+		<set-variable value="#[import * from dw::app::Verification&#10;---&#10;vars.averages default [] checkRacer vars.racerResponse.averages]" doc:name="find incorrectValues" doc:id="84fcffb1-9b32-4ea3-9d4e-4ffb9fc2a9f7" variableName="incorrectValues"/>
 		<logger level="DEBUG" doc:name="DEBUG" doc:id="ac6b72ed-280c-48a6-9fa2-d9f5b2b56761" message="#[vars.incorrectValues]" category="1brc.verify"/>
 		<validation:is-empty-collection doc:name="incorrectValues" doc:id="8f704062-0ee1-47bd-a806-4519aaffca17" values="#[vars.incorrectValues]" message='#["Failed 1brc validation with $(sizeOf(vars.incorrectValues)) incorrect"]'>
 			<error-mapping sourceType="VALIDATION:NOT_EMPTY_COLLECTION" targetType="APP:INVALID_RACE_RESULT" />

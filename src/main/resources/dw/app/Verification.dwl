@@ -1,4 +1,5 @@
 %dw 2.0
+import * from dw::core::Arrays
 
 fun checkRacer(rubric: Array, racer: Array): Array = do {
     var racerExtras = racer drop sizeOf(rubric)

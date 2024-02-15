@@ -1,3 +1,5 @@
+import * from dw::core::Arrays
+
 type Station = {name: String, temperatureAnchor: Number}
 type Measurement = {station: String, temperature: Number}
 
@@ -10,11 +12,16 @@ var stations: Array<Station> = readUrl("classpath://stations.csv", 'application/
 }
 
 fun randomStation(): Station = 
-	stations[randomInt(sizeOf(stations))]
+	randomStation(sizeOf(stations))
+	
+fun randomStation(maxUnique: Number): Station =
+	(stations take maxUnique)[randomInt(maxUnique)]
 
 fun randomTemperatures(count: Number): Array<Measurement> =
 	(1 to count) map do {
-		var station = randomStation() as Station
+		var station = 
+			if (count < 100000) randomStation(count / 50) as Station
+			else randomStation() as Station
 		---
 		{
 			station: station.name,
