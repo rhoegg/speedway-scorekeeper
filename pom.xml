@@ -72,12 +72,6 @@
 			<type>zip</type>
 		</dependency>
 		<dependency>
-			<groupId>ae6d7954-6fc2-4f3e-8777-80ff8aabd859</groupId>
-			<artifactId>mule-plugin-racer-api</artifactId>
-			<version>2.0.0</version>
-			<classifier>mule-plugin</classifier>
-		</dependency>
-		<dependency>
 			<groupId>org.mule.modules</groupId>
 			<artifactId>mule-validation-module</artifactId>
 			<version>2.0.6</version>
@@ -104,12 +98,6 @@
 			<scope>test</scope>
 		</dependency>
 		<dependency>
-			<groupId>org.mule.modules</groupId>
-			<artifactId>mule-apikit-module</artifactId>
-			<version>1.10.1</version>
-			<classifier>mule-plugin</classifier>
-		</dependency>
-		<dependency>
 			<groupId>com.mulesoft.services</groupId>
 			<artifactId>mule-service-weave-ee</artifactId>
 			<version>2.4.0-20221212</version>
@@ -125,6 +113,24 @@
 			<groupId>org.mule.modules</groupId>
 			<artifactId>mule-compression-module</artifactId>
 			<version>2.2.3</version>
+			<classifier>mule-plugin</classifier>
+		</dependency>
+		<dependency>
+			<groupId>com.mulesoft.connectors</groupId>
+			<artifactId>mule-amazon-s3-connector</artifactId>
+			<version>6.3.8</version>
+			<classifier>mule-plugin</classifier>
+		</dependency>
+		<dependency>
+			<groupId>ae6d7954-6fc2-4f3e-8777-80ff8aabd859</groupId>
+			<artifactId>mule-plugin-racer-api</artifactId>
+			<version>2.0.1</version>
+			<classifier>mule-plugin</classifier>
+		</dependency>
+		<dependency>
+			<groupId>org.mule.modules</groupId>
+			<artifactId>mule-apikit-module</artifactId>
+			<version>1.10.3</version>
 			<classifier>mule-plugin</classifier>
 		</dependency>
 	</dependencies>
