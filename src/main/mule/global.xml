@@ -1,12 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<mule xmlns:api-gateway="http://www.mulesoft.org/schema/mule/api-gateway"
-	xmlns:racer-api="http://www.mulesoft.org/schema/mule/racer-api" xmlns:http="http://www.mulesoft.org/schema/mule/http"
-	xmlns="http://www.mulesoft.org/schema/mule/core"
-	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
+<mule xmlns:s3="http://www.mulesoft.org/schema/mule/s3"
+	xmlns:api-gateway="http://www.mulesoft.org/schema/mule/api-gateway" xmlns:racer-api="http://www.mulesoft.org/schema/mule/racer-api"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
 http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
 http://www.mulesoft.org/schema/mule/racer-api http://www.mulesoft.org/schema/mule/racer-api/current/mule-racer-api.xsd
-http://www.mulesoft.org/schema/mule/api-gateway http://www.mulesoft.org/schema/mule/api-gateway/current/mule-api-gateway.xsd">
+http://www.mulesoft.org/schema/mule/api-gateway http://www.mulesoft.org/schema/mule/api-gateway/current/mule-api-gateway.xsd
+http://www.mulesoft.org/schema/mule/s3 http://www.mulesoft.org/schema/mule/s3/current/mule-s3.xsd">
 	<global-property doc:name="Global Property" doc:id="fc417433-ad0c-4525-86e3-02f602a33f7a" name="mule.env" value="local" />
 	<configuration-properties doc:name="Configuration properties" doc:id="c82bc038-3f43-4b21-b721-eed741c7e9d4" file="config/${mule.env}.yaml" />
     <http:listener-config name="httpListenerConfig">
@@ -14,4 +15,7 @@ http://www.mulesoft.org/schema/mule/api-gateway http://www.mulesoft.org/schema/m
     </http:listener-config>
 	<racer-api:config name="racerApiConfig" doc:name="Racer API Config" doc:id="86405d40-1002-4238-aa06-d7b64a6074dc" property_host="example" property_port="443" property_protocol="HTTPS" />
 	<api-gateway:autodiscovery apiId="${anypoint.api.id}" ignoreBasePath="true" doc:name="API Autodiscovery" doc:id="02a37809-e5d2-4d5c-b756-899d6ecc992c" flowRef="scorekeeper-system-api-main" />
+	<s3:config name="speedwayS3Config" doc:name="Amazon S3 Configuration" doc:id="600ad4fb-db23-4e9b-9570-6111afd58938" >
+		<s3:connection accessKey="${aws.accessKey}" secretKey="${aws.secretKey}" region="us-east-2" />
+	</s3:config>
 </mule>

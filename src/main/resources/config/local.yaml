@@ -4,3 +4,7 @@ http:
 anypoint:
   api:
     id: "1"
+
+aws:
+  accessKey: xxxx
+  secretKey: yyyy

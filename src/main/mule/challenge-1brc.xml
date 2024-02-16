@@ -1,14 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<mule xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:validation="http://www.mulesoft.org/schema/mule/validation"
-	xmlns:racer-api="http://www.mulesoft.org/schema/mule/racer-api"
-	xmlns:compression="http://www.mulesoft.org/schema/mule/compression" xmlns:file="http://www.mulesoft.org/schema/mule/file" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+<mule xmlns:s3="http://www.mulesoft.org/schema/mule/s3" xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns:validation="http://www.mulesoft.org/schema/mule/validation"
+	xmlns:racer-api="http://www.mulesoft.org/schema/mule/racer-api" xmlns:compression="http://www.mulesoft.org/schema/mule/compression" xmlns:file="http://www.mulesoft.org/schema/mule/file" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
 http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
 http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/file/current/mule-file.xsd
 http://www.mulesoft.org/schema/mule/compression http://www.mulesoft.org/schema/mule/compression/current/mule-compression.xsd
 http://www.mulesoft.org/schema/mule/racer-api http://www.mulesoft.org/schema/mule/racer-api/current/mule-racer-api.xsd
 http://www.mulesoft.org/schema/mule/validation http://www.mulesoft.org/schema/mule/validation/current/mule-validation.xsd
-http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd">
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/s3 http://www.mulesoft.org/schema/mule/s3/current/mule-s3.xsd">
 	<flow name="score1brc" doc:id="3e5005c5-80c7-4a3e-b37f-b5dd535fc739" >
 		<set-variable value="#[payload.endpoint]" doc:name="endpoint" doc:id="0cd5dd69-1a38-4662-a6de-f5c612782919" variableName="endpoint"/>
 		<set-variable value="#[payload.racerId]" doc:name="racerId" doc:id="77cb6863-41c0-42f8-8ea9-d79852e8d98c" variableName="racerId"/>
@@ -62,6 +63,49 @@ randomTemperatures(1000000000)]]></ee:set-payload>
 		<file:write doc:name="stations-{timestamp}.csv.gz" doc:id="26c4c0fe-5804-4190-b7a8-e432640bd5d1" path='#["/Users/rhoegg/src/anypointspeedway/tmp/stations-$(vars.timestamp).csv.gz"]' />
 		<logger level="INFO" doc:name="INFO" doc:id="c08836a9-04e5-41a9-9c7a-2a558d876ef8" category="1brc.generate" message='#["Completed 1brc data generation, started $(vars.timestamp)"]'/>
 	</flow>
+	<flow name="computeAverages1brc" doc:id="7a72666b-8943-4909-a2ce-05dc6bc302d3" initialState="stopped">
+		<scheduler doc:name="Scheduler" doc:id="9f7e5c6d-1f0b-4392-bb4a-2ba43bd9bd76" >
+			<scheduling-strategy >
+				<fixed-frequency frequency="225" timeUnit="MINUTES"/>
+			</scheduling-strategy>
+		</scheduler>
+		<s3:list-objects doc:name="List Objects" doc:id="0e8d088b-bcd5-4e9a-9187-f6d6f6754fa5" config-ref="speedwayS3Config" bucketName="speedway-internal" prefix="scorekeeper/1brc/1Mstations"/>
+		<foreach doc:name="For Each" doc:id="6702e4dd-210f-47dd-828f-a040a1fec072" >
+			<set-variable value="#[payload.key]" doc:name="filename" doc:id="6ce7f7fc-deeb-437f-95c7-6d686d85db73" variableName="filename"/>
+			<logger level="INFO" doc:name="INFO" doc:id="7b3d6b9f-6cfa-4cfb-aa5b-595434d1b89f" message='#["averages for $(vars.filename)"]' category="1brc.compute"/>
+			<s3:get-object doc:name="Get Object" doc:id="bab8b038-d138-4e02-8af8-6fe9245ded3a" config-ref="speedwayS3Config" bucketName="speedway-internal" key="#[payload.key]"/>
+			<compression:decompress doc:name="Decompress" doc:id="d18cab1d-2f8d-41e3-907c-aa3fb68a74e2" outputMimeType="application/csv; streaming=true">
+				<compression:decompressor >
+					<compression:gzip-decompressor />
+				</compression:decompressor>
+			</compression:decompress>
+			<ee:transform doc:name="averages" doc:id="28635b9a-5341-47a7-8bbd-cbf7f031dbbc" >
+				<ee:message >
+					<ee:set-payload ><![CDATA[%dw 2.0
+output application/csv deferred=true
+
+var grouped = payload groupBy $.station
+	pluck (measurements, station) -> 
+		{ station: station, temperature: avg(measurements map $.temp) }
+---
+grouped orderBy $.station map {
+	station: $.station,
+	temperature: $.temperature as String { format: "#.00000" } as Number
+}]]></ee:set-payload>
+				</ee:message>
+			</ee:transform>
+			<compression:compress doc:name="Compress" doc:id="d501eb59-c81d-4d22-b3d6-cec7e46aa156" >
+				<compression:compressor >
+					<compression:gzip-compressor />
+				</compression:compressor>
+			</compression:compress>
+			<set-variable value='#[output application/java&#10;import * from dw::core::Strings&#10;&#10;var prefix = vars.filename substringBefore "-" default ""&#10;var suffix = vars.filename substringAfter prefix default ""&#10;--- &#10;"averages" ++ suffix]' doc:name="averagesFilename" doc:id="f6e450d4-4ad6-498a-a004-4ce0fb43cdd6" variableName="averagesFilename"/>
+			<logger level="INFO" doc:name="INFO" doc:id="57ff14c4-1a21-42e3-9ba6-afa929ef84dc" category="1brc.compute" message='#["uploading averages $(vars.averagesFilename)"]'/>
+			<file:write doc:name="Write" doc:id="27f2bcc2-7f3d-4357-aed8-932c712e6cf8" path='#["/Users/rhoegg/src/anypointspeedway/tmp/$(vars.averagesFilename)"]'/>
+			<file:read doc:name="Read" doc:id="d561c7a9-d2dd-4e5c-8929-0a3e22ae0dc0" path='#["/Users/rhoegg/src/anypointspeedway/tmp/$(vars.averagesFilename)"]'/>
+			<s3:put-object doc:name="Put Object" doc:id="c44f39ae-9023-434e-a871-18076a48007e" config-ref="speedwayS3Config" bucketName="speedway-internal" key='#["scorekeeper/1brc/$(vars.averagesFilename)"]' contentLength="#[attributes.size]"/>
+		</foreach>
+	</flow>
 	<sub-flow name="prepare1brcData" doc:id="d51af147-4bcd-482a-920a-c7ca75b18563">
 		<choice doc:name="Choice" doc:id="690e050c-8ae7-4cd1-a866-e5d8d5229266">
 			<when expression="#[vars.count &gt; 10000]">
@@ -78,15 +122,53 @@ import * from dw::app::Generator
 randomTemperatures(vars.count)]]></ee:set-payload>
 					</ee:message>
 				</ee:transform>
-				<set-variable value='#[%dw 2.0&#10;output application/json&#10;&#10;var grouped = payload groupBy $.station&#10;	pluck (measurements, station) -&gt; &#10;		{ station: station, temperature: avg(measurements map $.temperature) }&#10;---&#10;grouped orderBy $.station map {&#10;	station: $.station,&#10;	temperature: $.temperature as String { format: "#.00000" } as Number&#10;}]' doc:name="averages" doc:id="5d79d891-faea-4bd2-8055-0a20caa3245e" variableName="averages"/>
+				<set-variable value='#[%dw 2.0&#10;output application/json&#10;&#10;var grouped = payload groupBy $.station&#10;	pluck (measurements, station) -&gt; &#10;		{ station: station, temperature: avg(measurements map $.temperature) }&#10;---&#10;grouped orderBy $.station map {&#10;	station: $.station,&#10;	temperature: $.temperature as String { format: "#.00000" } as Number&#10;}]' doc:name="averages" doc:id="5d79d891-faea-4bd2-8055-0a20caa3245e" variableName="averages" />
 			</otherwise>
 		</choice>
 	</sub-flow>
 	<sub-flow name="fetchRandomStationData" doc:id="d1f6ca8e-6aaf-4035-b2ac-b759dadcf86a" >
-		<logger level="INFO" doc:name="Logger" doc:id="f04e5a28-f79c-41a2-b5f3-856dad0eea44" />
+		<choice doc:name="Choice" doc:id="c565d5fe-08d3-4465-b04b-9afdf7eee6b2" >
+			<when expression="#[payload.count == 1000000]">
+				<set-variable value="1Mstations" doc:name="prefix" doc:id="08f7bad3-37a9-431a-839e-c692e1dbc104" variableName="prefix"/>
+			</when>
+			<when expression="#[payload.count == 1000000000]">
+				<set-variable value="stations" doc:name="prefix" doc:id="5f14eef1-8987-4e2f-99a0-e95e27e89ed6" variableName="prefix"/>
+			</when>
+			<otherwise >
+				<raise-error doc:name="BAD_REQUEST" doc:id="cb8e00d5-c38b-47e1-958b-9789b6f49abd" type="APP:BAD_REQUEST" description='#["Unsupported temperature count $(payload.count)"]'/>
+			</otherwise>
+		</choice>
+		<s3:list-objects doc:name="1brc data files" doc:id="7b224c01-fa0d-4cc2-8cc0-c6a39dfbd166" config-ref="speedwayS3Config" bucketName="speedway-internal" prefix='#["scorekeeper/1brc/$(vars.prefix)"]'/>
+		<ee:transform doc:name="choose 1" doc:id="8bf786af-51f8-4950-a90b-adc706730985" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+payload[randomInt(sizeOf(payload))]]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="DEBUG" doc:name="DEBUG" doc:id="3c3202b9-d212-4d54-bd7f-cd241b40f633" message='#["Fetching $(payload.key)"]' category="1brc.fetch"/>
+		<s3:get-object doc:name="stations data" doc:id="ef36261f-89c8-44dd-ba1a-97a4a07b7ab8" config-ref="speedwayS3Config" bucketName="speedway-internal" key="#[payload.key]"/>
+		<compression:decompress doc:name="Decompress CSV" doc:id="1e6facd0-b1eb-4b8e-9998-8f1b1c3c63cc" outputMimeType="application/csv; streaming=true">
+			<compression:decompressor >
+				<compression:gzip-decompressor />
+			</compression:decompressor>
+		</compression:decompress>
 	</sub-flow>
 	<sub-flow name="fudgeTemperatures" doc:id="ac55a50e-eebf-4d79-b327-d02acb7a1e7f" >
-		<logger level="INFO" doc:name="Logger" doc:id="a6a95f81-fe83-456a-b7e5-f252dc6c247a" category="fdsfds"/>
+		<set-variable value="#[random() * 2 - 1]" doc:name="epsilon" doc:id="86b0995d-5040-457e-b063-d276ff184e02" variableName="epsilon"/>
+		<set-variable value="#[0]" doc:name="epsilon = 0" doc:id="080676f1-d969-4ab7-a5c8-ad5c221ce2c2" variableName="epsilon"/>
+		<ee:transform doc:name="adjust values" doc:id="da85c3ce-46d1-4f1a-9f82-79de58bf7bc9" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/csv deferred=true
+---
+payload map {
+	station: $.station,
+	temperature: $.temp + vars.epsilon
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
 	</sub-flow>
 	<sub-flow name="verify1brcRacerAverages" doc:id="d9e11adc-77fb-4d92-8267-be55746596d6" >
 		<set-variable value="#[import * from dw::app::Verification&#10;---&#10;vars.averages default [] checkRacer vars.racerResponse.averages]" doc:name="find incorrectValues" doc:id="84fcffb1-9b32-4ea3-9d4e-4ffb9fc2a9f7" variableName="incorrectValues"/>
