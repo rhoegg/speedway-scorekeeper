@@ -26,6 +26,7 @@
         <!-- Mule logger -->
         <AsyncLogger name="org.mule.runtime.core.internal.processor.LoggerMessageProcessor" level="INFO"/>
         <AsyncLogger name="1brc" level="DEBUG"/>
+        <AsyncLogger name="1brc.verify" level="INFO"/>
         <AsyncLogger name="challenge" level="DEBUG"/>
 
         <AsyncRoot level="INFO">

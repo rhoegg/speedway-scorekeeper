@@ -8,3 +8,11 @@ anypoint:
 aws:
   accessKey: xxxx
   secretKey: yyyy
+
+racer:
+  timeout: "7200000" # milliseconds
+
+challenge:
+  '1brc':
+    tolerance: "0.00002"
+    

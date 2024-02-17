@@ -141,5 +141,10 @@ output application/json
     </flow>
     <flow name="post:\timed\temperature-averages:application\json:scorekeeper-system-api-config">
 		<flow-ref doc:name="score1brc" doc:id="2156ab7e-d564-4920-ad03-d5c04f516603" name="score1brc"/>
+		<error-handler >
+			<on-error-propagate enableNotifications="true" logException="false" doc:name="On Error Propagate" doc:id="9b862a60-4f54-4ea2-90c1-120ae0197531" type="APP:BADRACER, APP:INVALID_RACE_RESULT">
+				<set-variable value="400" doc:name="httpStatus = 400" doc:id="da823d6c-64b7-43bf-8853-1e3efc377773" variableName="httpStatus"/>
+			</on-error-propagate>
+		</error-handler>
     </flow>
 </mule>

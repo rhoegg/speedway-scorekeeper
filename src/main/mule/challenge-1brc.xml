@@ -16,8 +16,10 @@ http://www.mulesoft.org/schema/mule/s3 http://www.mulesoft.org/schema/mule/s3/cu
 		<set-variable value="#[uuid()]" doc:name="raceId" doc:id="f32dc870-dc95-4adb-b0c9-23d68fc576a0" variableName="raceId"/>
 		<set-variable value="#[payload.count]" doc:name="count" doc:id="b2a8623e-75fd-49ce-84bc-03b7a9cc7ab6" variableName="count"/>
 		<flow-ref doc:name="prepare1brcData" doc:id="10b8d45c-271f-45ec-af21-5c6118467e6c" name="prepare1brcData" />
+		<logger level="DEBUG" doc:name="DEBUG" doc:id="bfbaf2da-86ba-4cee-9f57-868eb273e2bc" message='Timing racer #[vars.racerId]' category="1brc.timer"/>
 		<set-variable value="#[now()]" doc:name="officialStart" doc:id="c586b7c2-7d01-4fbf-9176-aeb17fef9c37" variableName="officialStart" />
-		<http:request method="POST" doc:name="endpoint POST /1brc" doc:id="595b5aff-46cf-4fd6-9ed1-077f9b12ce18" url='#["$(vars.endpoint)/1brc"]' requestStreamingMode="ALWAYS" target="racerResponse"/>
+		<http:request method="POST" doc:name="endpoint POST /1brc" doc:id="595b5aff-46cf-4fd6-9ed1-077f9b12ce18" url='#["$(vars.endpoint)/1brc"]' requestStreamingMode="ALWAYS" target="racerResponse" responseTimeout="${racer.timeout}"/>
+		<logger level="DEBUG" doc:name="DEBUG" doc:id="eed36b48-b16d-4dd6-aaaf-ba30e6847b81" message='Got response from racer #[vars.racerId]' category="1brc.timer"/>
 		<set-variable value='#[((now() - vars.officialStart) as Number {unit: "nanos"}) / 1000000000]' doc:name="officialTime" doc:id="3a1b8e09-c13e-4332-a681-f2c0d2104d1c" variableName="officialTime" />
 		<validation:is-true doc:name="check racer ID" doc:id="177ea176-dfe7-448c-a1b8-aab3309b3502" expression="#[vars.racerResponse.racerId == vars.racerId]" message="incorrect racer ID in Average Temperatures response" >
 			<error-mapping sourceType="VALIDATION:INVALID_BOOLEAN" targetType="APP:BADRACER" />
@@ -111,8 +113,10 @@ grouped orderBy $.station map {
 			<when expression="#[vars.count &gt; 10000]">
 				<flow-ref doc:name="fetchRandomStationData" doc:id="f24b2a03-08d8-4b62-8a51-c609ef81530e" name="fetchRandomStationData" />
 				<flow-ref doc:name="fudgeTemperatures" doc:id="a7be3e36-ee11-4088-a7be-2ea61145b232" name="fudgeTemperatures" />
+				<flow-ref doc:name="fetchCachedAverages" doc:id="18e50ccd-ea29-4062-be54-e4c5f818a13d" name="fetchCachedAverages" target="averages"/>
 			</when>
 			<otherwise>
+				<logger level="DEBUG" doc:name="DEBUG" doc:id="2828afdd-6526-4056-862f-2eea74e968df" message='Preparing random input of #[vars.count] samples' category="1brc.prepare"/>
 				<ee:transform doc:name="randomTemperatures" doc:id="91c6ec2d-60b6-4d95-8501-764ca7b5c37b">
 					<ee:message>
 						<ee:set-payload><![CDATA[%dw 2.0
@@ -139,29 +143,52 @@ randomTemperatures(vars.count)]]></ee:set-payload>
 			</otherwise>
 		</choice>
 		<s3:list-objects doc:name="1brc data files" doc:id="7b224c01-fa0d-4cc2-8cc0-c6a39dfbd166" config-ref="speedwayS3Config" bucketName="speedway-internal" prefix='#["scorekeeper/1brc/$(vars.prefix)"]'/>
-		<ee:transform doc:name="choose 1" doc:id="8bf786af-51f8-4950-a90b-adc706730985" >
-			<ee:message >
-				<ee:set-payload ><![CDATA[%dw 2.0
-output application/java
----
-payload[randomInt(sizeOf(payload))]]]></ee:set-payload>
-			</ee:message>
-		</ee:transform>
-		<logger level="DEBUG" doc:name="DEBUG" doc:id="3c3202b9-d212-4d54-bd7f-cd241b40f633" message='#["Fetching $(payload.key)"]' category="1brc.fetch"/>
-		<s3:get-object doc:name="stations data" doc:id="ef36261f-89c8-44dd-ba1a-97a4a07b7ab8" config-ref="speedwayS3Config" bucketName="speedway-internal" key="#[payload.key]"/>
+		<set-variable value="#[%dw 2.0&#10;output application/java&#10;---&#10;payload[randomInt(sizeOf(payload))].key as String]" doc:name="cachedStationObjectKey" doc:id="e9bc06bf-d929-4f82-aedc-c5df549ee491" variableName="cachedStationObjectKey"/>
+		<logger level="DEBUG" doc:name="DEBUG" doc:id="3c3202b9-d212-4d54-bd7f-cd241b40f633" message='#["Fetching $(vars.cachedStationObjectKey)"]' category="1brc.fetch"/>
+		<s3:get-object doc:name="stations data" doc:id="ef36261f-89c8-44dd-ba1a-97a4a07b7ab8" config-ref="speedwayS3Config" bucketName="speedway-internal" key="#[vars.cachedStationObjectKey]"/>
 		<compression:decompress doc:name="Decompress CSV" doc:id="1e6facd0-b1eb-4b8e-9998-8f1b1c3c63cc" outputMimeType="application/csv; streaming=true">
 			<compression:decompressor >
 				<compression:gzip-decompressor />
 			</compression:decompressor>
 		</compression:decompress>
+		<ee:transform doc:name="to JSON" doc:id="d95ab33a-89d5-4745-bc5a-684e78982ede" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json deferred=true
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</sub-flow>
+	<sub-flow name="fetchCachedAverages" doc:id="4225ab7f-12f0-47cd-96cc-c3954881d62d" >
+		<set-variable value='#[%dw 2.0&#10;import * from dw::core::Strings&#10;var objectKey = (vars.cachedStationObjectKey splitBy "/")[-1] as String&#10;// example 1Mstations-2024-02-12 132041.csv.gz&#10;---&#10;"averages-" ++ (objectKey substringAfter "-")]' doc:name="cachedAveragesObjectKey" doc:id="8f43e986-39a7-4ee0-955a-93f9a844a815" variableName="cachedAveragesObjectKey"/>
+		<logger level="DEBUG" doc:name="DEBUG" doc:id="4a1fa344-9a96-48d3-937d-db729d9f7735" message='#["fetching cached averages $(vars.cachedAveragesObjectKey)"]' category="1brc.averages"/>
+		<s3:get-object doc:name="averages" doc:id="37a284dd-3553-4874-aa9c-d476d6ee27fd" config-ref="speedwayS3Config" bucketName="speedway-internal" key='#["scorekeeper/1brc/$(vars.cachedAveragesObjectKey)"]'/>
+		<compression:decompress doc:name="Decompress CSV" doc:id="ae789403-53eb-4322-a55e-f37f56ea2697" outputMimeType="application/csv; streaming=true">
+			<compression:decompressor >
+				<compression:gzip-decompressor />
+			</compression:decompressor>
+		</compression:decompress>
+		<ee:transform doc:name="averages JSON" doc:id="8634def3-0877-4557-a17c-3d0f445d052b" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json deferred=true
+---
+payload map (row) -> {
+	station: row.station,
+	temperature: row.temperature as Number + vars.epsilon 
+		as String { format: "#.00000" } as Number
+}
+]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
 	</sub-flow>
 	<sub-flow name="fudgeTemperatures" doc:id="ac55a50e-eebf-4d79-b327-d02acb7a1e7f" >
 		<set-variable value="#[random() * 2 - 1]" doc:name="epsilon" doc:id="86b0995d-5040-457e-b063-d276ff184e02" variableName="epsilon"/>
-		<set-variable value="#[0]" doc:name="epsilon = 0" doc:id="080676f1-d969-4ab7-a5c8-ad5c221ce2c2" variableName="epsilon"/>
 		<ee:transform doc:name="adjust values" doc:id="da85c3ce-46d1-4f1a-9f82-79de58bf7bc9" >
 			<ee:message >
 				<ee:set-payload ><![CDATA[%dw 2.0
-output application/csv deferred=true
+output application/json deferred=true
 ---
 payload map {
 	station: $.station,
@@ -171,7 +198,8 @@ payload map {
 		</ee:transform>
 	</sub-flow>
 	<sub-flow name="verify1brcRacerAverages" doc:id="d9e11adc-77fb-4d92-8267-be55746596d6" >
-		<set-variable value="#[import * from dw::app::Verification&#10;---&#10;vars.averages default [] checkRacer vars.racerResponse.averages]" doc:name="find incorrectValues" doc:id="84fcffb1-9b32-4ea3-9d4e-4ffb9fc2a9f7" variableName="incorrectValues"/>
+		<set-variable value="#[vars.racerResponse.averages]" doc:name="racerAverages" doc:id="109923a9-0e9f-4bca-a72d-770f79909d6c" variableName="racerAverages"/>
+		<set-variable value="#[import * from dw::app::Verification&#10;---&#10;vars.averages default [] checkRacer vars.racerAverages]" doc:name="find incorrectValues" doc:id="84fcffb1-9b32-4ea3-9d4e-4ffb9fc2a9f7" variableName="incorrectValues"/>
 		<logger level="DEBUG" doc:name="DEBUG" doc:id="ac6b72ed-280c-48a6-9fa2-d9f5b2b56761" message="#[vars.incorrectValues]" category="1brc.verify"/>
 		<validation:is-empty-collection doc:name="incorrectValues" doc:id="8f704062-0ee1-47bd-a806-4519aaffca17" values="#[vars.incorrectValues]" message='#["Failed 1brc validation with $(sizeOf(vars.incorrectValues)) incorrect"]'>
 			<error-mapping sourceType="VALIDATION:NOT_EMPTY_COLLECTION" targetType="APP:INVALID_RACE_RESULT" />
