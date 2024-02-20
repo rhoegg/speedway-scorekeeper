@@ -134,16 +134,17 @@ randomTemperatures(vars.count)]]></ee:set-payload>
 		<choice doc:name="Choice" doc:id="c565d5fe-08d3-4465-b04b-9afdf7eee6b2" >
 			<when expression="#[payload.count == 1000000]">
 				<set-variable value="1Mstations" doc:name="prefix" doc:id="08f7bad3-37a9-431a-839e-c692e1dbc104" variableName="prefix"/>
+				<s3:list-objects doc:name="1brc data files" doc:id="7b224c01-fa0d-4cc2-8cc0-c6a39dfbd166" config-ref="speedwayS3Config" bucketName="speedway-internal" prefix='#["scorekeeper/1brc/$(vars.prefix)"]' />
+				<set-variable value="#[%dw 2.0&#10;output application/java&#10;---&#10;payload[randomInt(sizeOf(payload))].key as String]" doc:name="cachedStationObjectKey" doc:id="e9bc06bf-d929-4f82-aedc-c5df549ee491" variableName="cachedStationObjectKey" />
 			</when>
 			<when expression="#[payload.count == 1000000000]">
 				<set-variable value="stations" doc:name="prefix" doc:id="5f14eef1-8987-4e2f-99a0-e95e27e89ed6" variableName="prefix"/>
+				<set-variable value="scorekeeper/1brc/stations-2024-02-10 222443.csv.gz" doc:name="cachedStationObjectKey" doc:id="cae5c1c1-93ad-4718-bf7b-89385996892e" variableName="cachedStationObjectKey"/>
 			</when>
 			<otherwise >
 				<raise-error doc:name="BAD_REQUEST" doc:id="cb8e00d5-c38b-47e1-958b-9789b6f49abd" type="APP:BAD_REQUEST" description='#["Unsupported temperature count $(payload.count)"]'/>
 			</otherwise>
 		</choice>
-		<s3:list-objects doc:name="1brc data files" doc:id="7b224c01-fa0d-4cc2-8cc0-c6a39dfbd166" config-ref="speedwayS3Config" bucketName="speedway-internal" prefix='#["scorekeeper/1brc/$(vars.prefix)"]'/>
-		<set-variable value="#[%dw 2.0&#10;output application/java&#10;---&#10;payload[randomInt(sizeOf(payload))].key as String]" doc:name="cachedStationObjectKey" doc:id="e9bc06bf-d929-4f82-aedc-c5df549ee491" variableName="cachedStationObjectKey"/>
 		<logger level="DEBUG" doc:name="DEBUG" doc:id="3c3202b9-d212-4d54-bd7f-cd241b40f633" message='#["Fetching $(vars.cachedStationObjectKey)"]' category="1brc.fetch"/>
 		<s3:get-object doc:name="stations data" doc:id="ef36261f-89c8-44dd-ba1a-97a4a07b7ab8" config-ref="speedwayS3Config" bucketName="speedway-internal" key="#[vars.cachedStationObjectKey]"/>
 		<compression:decompress doc:name="Decompress CSV" doc:id="1e6facd0-b1eb-4b8e-9998-8f1b1c3c63cc" outputMimeType="application/csv; streaming=true">
@@ -201,8 +202,15 @@ payload map {
 		<set-variable value="#[vars.racerResponse.averages]" doc:name="racerAverages" doc:id="109923a9-0e9f-4bca-a72d-770f79909d6c" variableName="racerAverages"/>
 		<set-variable value="#[import * from dw::app::Verification&#10;---&#10;vars.averages default [] checkRacer vars.racerAverages]" doc:name="find incorrectValues" doc:id="84fcffb1-9b32-4ea3-9d4e-4ffb9fc2a9f7" variableName="incorrectValues"/>
 		<logger level="DEBUG" doc:name="DEBUG" doc:id="ac6b72ed-280c-48a6-9fa2-d9f5b2b56761" message="#[vars.incorrectValues]" category="1brc.verify"/>
-		<validation:is-empty-collection doc:name="incorrectValues" doc:id="8f704062-0ee1-47bd-a806-4519aaffca17" values="#[vars.incorrectValues]" message='#["Failed 1brc validation with $(sizeOf(vars.incorrectValues)) incorrect"]'>
+		<try doc:name="Try" doc:id="b33ef69a-dd7e-406d-ba9d-2a504cded19f" >
+			<validation:is-empty-collection doc:name="incorrectValues" doc:id="8f704062-0ee1-47bd-a806-4519aaffca17" values="#[vars.incorrectValues]" message='#["Failed 1brc validation with $(sizeOf(vars.incorrectValues)) incorrect"]'>
 			<error-mapping sourceType="VALIDATION:NOT_EMPTY_COLLECTION" targetType="APP:INVALID_RACE_RESULT" />
 		</validation:is-empty-collection>
+			<error-handler >
+				<on-error-propagate enableNotifications="true" logException="false" doc:name="On Error Propagate" doc:id="ec4cd433-8a07-4d9f-af85-7a3915dc828c" type="APP:INVALID_RACE_RESULT">
+					<logger level="WARN" doc:name="WARN" doc:id="f2218e88-9469-412e-ba23-4e12653ac12b" category="1brc.verify" message="Racer returned incorrect values, example: #[output application/json --- vars.incorrectValues[0]]"/>
+				</on-error-propagate>
+			</error-handler>
+		</try>
 	</sub-flow>
 </mule>

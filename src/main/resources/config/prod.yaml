@@ -4,3 +4,10 @@ http:
 anypoint:
   api:
     id: "19302990"
+
+racer:
+  timeout: "7200000" # milliseconds
+
+challenge:
+  '1brc':
+    tolerance: "0.00002"
