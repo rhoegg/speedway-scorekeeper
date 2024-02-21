@@ -123,7 +123,7 @@ output application/json
     <flow name="post:\timed\rest-api:application\json:scorekeeper-system-api-config">
 		<flow-ref doc:name="scoreRestApi" doc:id="03922b39-6785-487c-a925-46684a01f160" name="scoreRestApi"/>
 		<error-handler >
-			<on-error-continue enableNotifications="true" logException="false" doc:name="On Error Continue" doc:id="7c5a3e1e-99bb-48fc-849d-29514eda0aa6" type="HTTP:CONNECTIVITY">
+			<on-error-continue enableNotifications="true" logException="false" doc:name="On Error Continue" doc:id="7c5a3e1e-99bb-48fc-849d-29514eda0aa6" type="HTTP:CONNECTIVITY, HTTP:NOT_FOUND">
 				<set-variable value="400" doc:name="httpStatus = 400" doc:id="45971fe0-b32a-4d88-99c5-38dedb906a69" variableName="httpStatus"/>
 				<ee:transform doc:name="error response" doc:id="bd3b70b3-5fe7-4ae1-bee4-1e9c3e585414" >
 					<ee:message >
