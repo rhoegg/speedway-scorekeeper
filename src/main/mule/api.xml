@@ -121,9 +121,9 @@ output application/json
         </error-handler>
     </flow>
     <flow name="post:\timed\rest-api:application\json:scorekeeper-system-api-config">
-        <flow-ref doc:name="scoreRestApi" doc:id="03922b39-6785-487c-a925-46684a01f160" name="scoreRestApi" />
+		<flow-ref doc:name="scoreRestApi" doc:id="03922b39-6785-487c-a925-46684a01f160" name="scoreRestApi" />
         <error-handler>
-            <on-error-continue enableNotifications="true" logException="false" doc:name="On Error Continue" doc:id="7c5a3e1e-99bb-48fc-849d-29514eda0aa6" type="APP:BADRACER, APP:BADTOKEN, HTTP:BAD_GATEWAY, HTTP:BAD_REQUEST, HTTP:CONNECTIVITY, HTTP:FORBIDDEN, HTTP:INTERNAL_SERVER_ERROR, HTTP:METHOD_NOT_ALLOWED, HTTP:NOT_ACCEPTABLE, HTTP:NOT_FOUND, HTTP:SERVICE_UNAVAILABLE, HTTP:TIMEOUT, HTTP:TOO_MANY_REQUESTS, HTTP:UNAUTHORIZED, HTTP:UNSUPPORTED_MEDIA_TYPE">
+            <on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="7c5a3e1e-99bb-48fc-849d-29514eda0aa6" type="APP:BADRACER, APP:BADTOKEN, APP:BAD_ENDPOINT">
                 <set-variable value="400" doc:name="httpStatus = 400" doc:id="45971fe0-b32a-4d88-99c5-38dedb906a69" variableName="httpStatus" />
                 <ee:transform doc:name="error response" doc:id="bd3b70b3-5fe7-4ae1-bee4-1e9c3e585414">
                     <ee:message>
@@ -137,6 +137,20 @@ output application/json
                     </ee:message>
                 </ee:transform>
             </on-error-continue>
+			<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="76f7d12b-3a4e-4554-b78b-897f0977b86b" type="APP:ENDPOINT_DOWN">
+				<set-variable value="400" doc:name="httpStatus = 400" doc:id="0f3f2a79-15ff-413d-b5ac-4eefc2bc8655" variableName="httpStatus" />
+				<ee:transform doc:name="error response" doc:id="7485883e-4c3b-4dca-baaf-c9c2e9848611" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	error: "endpoint down",
+	detail: error.description
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</on-error-continue>
         </error-handler>
     </flow>
     <flow name="post:\timed\temperature-averages:application\json:scorekeeper-system-api-config">
