@@ -12,7 +12,7 @@ http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/htt
 		<set-variable value="#[(1 to payload.laps) map {lap: $, token: uuid()}]" doc:name="laps" doc:id="f6e04707-cf82-43f2-9842-25cbb0b9f767" variableName="laps" />
 		<set-variable value="#[payload.racerId]" doc:name="racerId" doc:id="497b7bab-f1f5-4be1-b652-1feb7efb1bbe" variableName="racerId" />
 		<set-variable value="#[uuid()]" doc:name="token" doc:id="a8f7d762-8928-488b-9612-1bc1fa94dda1" variableName="token" />
-		<logger level="DEBUG" doc:name="DEBUG" doc:id="254c352b-16fa-47c9-9af2-9e165953bd14" message='#["Starting race for racer $(vars.racerId) with $(payload.laps) laps"]' category="challenge.rest-api" />
+		<logger level="DEBUG" doc:name="DEBUG" doc:id="254c352b-16fa-47c9-9af2-9e165953bd14" message='Starting race for racer #[vars.racerId] with #[payload.laps] laps' category="challenge.rest-api" />
 		<set-variable value="#[now()]" doc:name="officialStart" doc:id="68fa157c-7f61-4519-a519-e98d279212ad" variableName="officialStart"/>
 		<ee:transform doc:name="start race request" doc:id="84224723-c3d3-4c3e-8633-1fbf02b8cead">
 			<ee:message>
@@ -45,10 +45,10 @@ output application/json
 }]]></ee:set-payload>
 			</ee:message>
 		</ee:transform>
-		<logger level="INFO" doc:name="INFO" doc:id="60edbfb4-f66e-490f-a182-a18d9215e640" message='#["Completed race for racer $(vars.racerId) with $(sizeOf(vars.laps))"]' category="challenge.rest-api" />
+		<logger level="INFO" doc:name="INFO" doc:id="60edbfb4-f66e-490f-a182-a18d9215e640" message='#[output text/plain --- "Completed race for racer $(vars.racerId) with $(sizeOf(vars.laps))"]' category="challenge.rest-api" />
 	</sub-flow>
 	<sub-flow name="lap" doc:id="61668087-95e9-4e90-b1f5-3cf16f967cae" >
-		<logger level="DEBUG" doc:name="DEBUG" doc:id="afdf985d-decf-4fec-ac7b-41b3e9255f6c" message='#["Starting lap $(payload.lap) for racer $(vars.racerId)"]' category="challenge.rest-api.lap" />
+		<logger level="DEBUG" doc:name="DEBUG" doc:id="afdf985d-decf-4fec-ac7b-41b3e9255f6c" message='#[output text/plain --- "Starting lap $(payload.lap) for racer $(vars.racerId)"]' category="challenge.rest-api.lap" />
 		<http:request method="POST" doc:name="endpoint POST /races/{id}/laps" doc:id="3c294809-685b-4bbd-8935-150d47a4f145" url='#["$(vars.endpoint)/races/$(vars.raceId)/laps"]' target="racerResponse">
 			<http:body ><![CDATA[#[%dw 2.0
 output text/plain
@@ -58,7 +58,7 @@ payload.token]]]></http:body>
 		<validation:is-true doc:name="check racer ID" doc:id="0a9d8f5d-4c43-43ef-95dd-24e6402d1648" expression="#[vars.racerResponse.racerId == vars.racerId]" message="bad racer ID in lap response" >
 			<error-mapping sourceType="VALIDATION:INVALID_BOOLEAN" targetType="APP:BADRACER" />
 		</validation:is-true>
-		<logger level="DEBUG" doc:name="DEBUG" doc:id="9a950309-16fa-484b-85c8-8da6c2ae98af" message='checking racer token #[vars.racerResponse.token] against expected #[vars.token]' category="challenge.rest-api.lap"/>
+		<logger level="DEBUG" doc:name="DEBUG" doc:id="9a950309-16fa-484b-85c8-8da6c2ae98af" message='#[output text/plain&#10;---&#10;"checking racer token $(vars.racerResponse.token) against expected $(vars.token)"]' category="challenge.rest-api.lap"/>
 		<validation:is-true doc:name="check token" doc:id="996b7141-2045-41d3-8634-05dbc1657578" message="bad token in lap response" expression="#[vars.racerResponse.token == vars.token]" >
 			<error-mapping sourceType="VALIDATION:INVALID_BOOLEAN" targetType="APP:BADTOKEN" />
 		</validation:is-true>

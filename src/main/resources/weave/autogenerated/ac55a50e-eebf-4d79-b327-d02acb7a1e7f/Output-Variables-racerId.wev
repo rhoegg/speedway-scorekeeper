@@ -1,4 +1,0 @@
-%dw 2.0
-
-type auto_ac55a50e_eebf_4d79_b327_d02acb7a1e7f_Output_Variables_racerId = String
-

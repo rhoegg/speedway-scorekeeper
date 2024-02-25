@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <mule xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd ">
-    <apikit:config name="scorekeeper-system-api-config" api="resource::ae6d7954-6fc2-4f3e-8777-80ff8aabd859:scorekeeper-system-api:1.0.1:raml:zip:scorekeeper-system-api.raml" outboundHeadersMapName="outboundHeaders" httpStatusVarName="httpStatus" />
+    <apikit:config name="scorekeeper-system-api-config" api="resource::ae6d7954-6fc2-4f3e-8777-80ff8aabd859:scorekeeper-system-api:1.0.3:raml:zip:scorekeeper-system-api.raml" outboundHeadersMapName="outboundHeaders" httpStatusVarName="httpStatus" />
     <flow name="scorekeeper-system-api-main">
         <http:listener config-ref="httpListenerConfig" path="/api/*">
             <http:response statusCode="#[vars.httpStatus default 200]">
@@ -121,30 +121,30 @@ output application/json
         </error-handler>
     </flow>
     <flow name="post:\timed\rest-api:application\json:scorekeeper-system-api-config">
-		<flow-ref doc:name="scoreRestApi" doc:id="03922b39-6785-487c-a925-46684a01f160" name="scoreRestApi"/>
-		<error-handler >
-			<on-error-continue enableNotifications="true" logException="false" doc:name="On Error Continue" doc:id="7c5a3e1e-99bb-48fc-849d-29514eda0aa6" type="HTTP:CONNECTIVITY, HTTP:NOT_FOUND">
-				<set-variable value="400" doc:name="httpStatus = 400" doc:id="45971fe0-b32a-4d88-99c5-38dedb906a69" variableName="httpStatus"/>
-				<ee:transform doc:name="error response" doc:id="bd3b70b3-5fe7-4ae1-bee4-1e9c3e585414" >
-					<ee:message >
-						<ee:set-payload ><![CDATA[%dw 2.0
+        <flow-ref doc:name="scoreRestApi" doc:id="03922b39-6785-487c-a925-46684a01f160" name="scoreRestApi" />
+        <error-handler>
+            <on-error-continue enableNotifications="true" logException="false" doc:name="On Error Continue" doc:id="7c5a3e1e-99bb-48fc-849d-29514eda0aa6" type="APP:BADRACER, APP:BADTOKEN, HTTP:BAD_GATEWAY, HTTP:BAD_REQUEST, HTTP:CONNECTIVITY, HTTP:FORBIDDEN, HTTP:INTERNAL_SERVER_ERROR, HTTP:METHOD_NOT_ALLOWED, HTTP:NOT_ACCEPTABLE, HTTP:NOT_FOUND, HTTP:SERVICE_UNAVAILABLE, HTTP:TIMEOUT, HTTP:TOO_MANY_REQUESTS, HTTP:UNAUTHORIZED, HTTP:UNSUPPORTED_MEDIA_TYPE">
+                <set-variable value="400" doc:name="httpStatus = 400" doc:id="45971fe0-b32a-4d88-99c5-38dedb906a69" variableName="httpStatus" />
+                <ee:transform doc:name="error response" doc:id="bd3b70b3-5fe7-4ae1-bee4-1e9c3e585414">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
 output application/json
 ---
 {
 	error: "non-compliant endpoint",
 	detail: error.description
 }]]></ee:set-payload>
-					</ee:message>
-				</ee:transform>
-			</on-error-continue>
-		</error-handler>
+                    </ee:message>
+                </ee:transform>
+            </on-error-continue>
+        </error-handler>
     </flow>
     <flow name="post:\timed\temperature-averages:application\json:scorekeeper-system-api-config">
-		<flow-ref doc:name="score1brc" doc:id="2156ab7e-d564-4920-ad03-d5c04f516603" name="score1brc"/>
-		<error-handler >
-			<on-error-propagate enableNotifications="true" logException="false" doc:name="On Error Propagate" doc:id="9b862a60-4f54-4ea2-90c1-120ae0197531" type="APP:BADRACER, APP:INVALID_RACE_RESULT">
-				<set-variable value="400" doc:name="httpStatus = 400" doc:id="da823d6c-64b7-43bf-8853-1e3efc377773" variableName="httpStatus"/>
-			</on-error-propagate>
-		</error-handler>
+        <flow-ref doc:name="score1brc" doc:id="2156ab7e-d564-4920-ad03-d5c04f516603" name="score1brc" />
+        <error-handler>
+            <on-error-propagate enableNotifications="true" logException="false" doc:name="On Error Propagate" doc:id="9b862a60-4f54-4ea2-90c1-120ae0197531" type="APP:BADRACER, APP:INVALID_RACE_RESULT">
+                <set-variable value="400" doc:name="httpStatus = 400" doc:id="da823d6c-64b7-43bf-8853-1e3efc377773" variableName="httpStatus" />
+            </on-error-propagate>
+        </error-handler>
     </flow>
 </mule>

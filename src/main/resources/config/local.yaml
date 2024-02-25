@@ -9,10 +9,14 @@ aws:
   accessKey: xxxx
   secretKey: yyyy
 
+timer:
+  host: "3.139.90.246"
+  port: "80"
+  protocol: HTTP
+  
 racer:
-  timeout: "7200000" # milliseconds
+  timeout: "21600000" # milliseconds
 
 challenge:
   '1brc':
     tolerance: "0.00002"
-    

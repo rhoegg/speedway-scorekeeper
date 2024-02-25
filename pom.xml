@@ -54,22 +54,9 @@
 	<dependencies>
 		<dependency>
 			<groupId>org.mule.connectors</groupId>
-			<artifactId>mule-http-connector</artifactId>
-			<version>1.9.0</version>
-			<classifier>mule-plugin</classifier>
-		</dependency>
-		<dependency>
-			<groupId>org.mule.connectors</groupId>
 			<artifactId>mule-sockets-connector</artifactId>
 			<version>1.2.4</version>
 			<classifier>mule-plugin</classifier>
-		</dependency>
-		<dependency>
-			<groupId>ae6d7954-6fc2-4f3e-8777-80ff8aabd859</groupId>
-			<artifactId>scorekeeper-system-api</artifactId>
-			<version>1.0.1</version>
-			<classifier>raml</classifier>
-			<type>zip</type>
 		</dependency>
 		<dependency>
 			<groupId>org.mule.modules</groupId>
@@ -122,16 +109,29 @@
 			<classifier>mule-plugin</classifier>
 		</dependency>
 		<dependency>
-			<groupId>ae6d7954-6fc2-4f3e-8777-80ff8aabd859</groupId>
-			<artifactId>mule-plugin-racer-api</artifactId>
-			<version>2.0.1</version>
-			<classifier>mule-plugin</classifier>
-		</dependency>
-		<dependency>
 			<groupId>org.mule.modules</groupId>
 			<artifactId>mule-apikit-module</artifactId>
 			<version>1.10.3</version>
 			<classifier>mule-plugin</classifier>
+		</dependency>
+		<dependency>
+			<groupId>org.mule.connectors</groupId>
+			<artifactId>mule-http-connector</artifactId>
+			<version>1.9.1</version>
+			<classifier>mule-plugin</classifier>
+		</dependency>
+		<dependency>
+			<groupId>ae6d7954-6fc2-4f3e-8777-80ff8aabd859</groupId>
+			<artifactId>mule-plugin-racer-api</artifactId>
+			<version>2.0.2</version>
+			<classifier>mule-plugin</classifier>
+		</dependency>
+		<dependency>
+			<groupId>ae6d7954-6fc2-4f3e-8777-80ff8aabd859</groupId>
+			<artifactId>scorekeeper-system-api</artifactId>
+			<version>1.0.3</version>
+			<classifier>raml</classifier>
+			<type>zip</type>
 		</dependency>
 	</dependencies>
 	<repositories>

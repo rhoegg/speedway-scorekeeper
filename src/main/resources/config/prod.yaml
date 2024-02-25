@@ -5,6 +5,11 @@ anypoint:
   api:
     id: "19302990"
 
+timer:
+  host: "3.139.90.246"
+  port: "80"
+  protocol: HTTP
+  
 racer:
   timeout: "7200000" # milliseconds
 

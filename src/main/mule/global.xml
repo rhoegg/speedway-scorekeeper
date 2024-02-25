@@ -18,4 +18,7 @@ http://www.mulesoft.org/schema/mule/s3 http://www.mulesoft.org/schema/mule/s3/cu
 	<s3:config name="speedwayS3Config" doc:name="Amazon S3 Configuration" doc:id="600ad4fb-db23-4e9b-9570-6111afd58938" >
 		<s3:connection accessKey="${aws.accessKey}" secretKey="${aws.secretKey}" region="us-east-2" />
 	</s3:config>
+	<http:request-config name="timerHttpRequestConfig" doc:name="HTTP Request configuration" doc:id="3b36e537-a43a-4a69-bab7-0cf88652574f" >
+		<http:request-connection protocol="${timer.protocol}" host="${timer.host}" port="${timer.port}" />
+	</http:request-config>
 </mule>
