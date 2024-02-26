@@ -83,7 +83,7 @@ payload.token]]]></http:body>
 		<validation:is-true doc:name="check racer ID" doc:id="0a9d8f5d-4c43-43ef-95dd-24e6402d1648" expression="#[vars.racerResponse.racerId == vars.racerId]" message="bad racer ID in lap response" >
 			<error-mapping sourceType="VALIDATION:INVALID_BOOLEAN" targetType="APP:BADRACER" />
 		</validation:is-true>
-		<logger level="DEBUG" doc:name="DEBUG" doc:id="9a950309-16fa-484b-85c8-8da6c2ae98af" message='#[output text/plain&#10;---&#10;"checking racer token $(vars.racerResponse.token) against expected $(vars.token)"]' category="challenge.rest-api.lap"/>
+		<logger level="DEBUG" doc:name="DEBUG" doc:id="9a950309-16fa-484b-85c8-8da6c2ae98af" message='#[output text/plain&#10;---&#10;"checking racer token $(vars.racerResponse.token default "null") against expected $(vars.token)"]' category="challenge.rest-api.lap"/>
 		<validation:is-true doc:name="check token" doc:id="996b7141-2045-41d3-8634-05dbc1657578" message="bad token in lap response" expression="#[vars.racerResponse.token == vars.token]" >
 			<error-mapping sourceType="VALIDATION:INVALID_BOOLEAN" targetType="APP:BADTOKEN" />
 		</validation:is-true>
