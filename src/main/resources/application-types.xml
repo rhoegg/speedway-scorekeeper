@@ -547,4 +547,13 @@ type: number]]></types:shape>
       </types:input-event>
     </types:processor-declaration>
   </types:enrichment>
+  <types:enrichment select="#abec5f11-3f50-4359-bfe1-bc8725b83388">
+    <types:processor-declaration>
+      <types:input-event>
+        <types:variables>
+          <types:variable name="count" type="number"/>
+        </types:variables>
+      </types:input-event>
+    </types:processor-declaration>
+  </types:enrichment>
 </types:mule>
