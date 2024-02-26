@@ -158,7 +158,32 @@ output application/json
         <error-handler>
             <on-error-propagate enableNotifications="true" logException="false" doc:name="On Error Propagate" doc:id="9b862a60-4f54-4ea2-90c1-120ae0197531" type="APP:BADRACER, APP:INVALID_RACE_RESULT">
                 <set-variable value="400" doc:name="httpStatus = 400" doc:id="da823d6c-64b7-43bf-8853-1e3efc377773" variableName="httpStatus" />
+				<ee:transform doc:name="error response" doc:id="cec6cb7a-a22c-4b84-a16a-8cbda6b6a507" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	error: "non-compliant endpoint",
+	detail: error.description
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
             </on-error-propagate>
+			<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="a983e4d4-9168-4063-ac6f-1bf727e20792" type="APP:ENDPOINT_DOWN" >
+				<set-variable value="400" doc:name="httpStatus = 400" doc:id="7922fe62-4ff9-4583-97c7-12ba00349a18" variableName="httpStatus" />
+				<ee:transform doc:name="error response" doc:id="c6f8f64a-1e1c-4f38-bd8a-9661bfe8d6f8" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	error: "endpoint down",
+	detail: error.description
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</on-error-continue>
         </error-handler>
     </flow>
 </mule>

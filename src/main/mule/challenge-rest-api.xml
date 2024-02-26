@@ -63,6 +63,18 @@ output application/json
 	<sub-flow name="lap" doc:id="61668087-95e9-4e90-b1f5-3cf16f967cae" >
 		<logger level="DEBUG" doc:name="DEBUG" doc:id="afdf985d-decf-4fec-ac7b-41b3e9255f6c" message='#[output text/plain --- "Starting lap $(payload.lap) for racer $(vars.racerId)"]' category="challenge.rest-api.lap" />
 		<http:request method="POST" doc:name="endpoint POST /races/{id}/laps" doc:id="3c294809-685b-4bbd-8935-150d47a4f145" url='#["$(vars.endpoint)/races/$(vars.raceId)/laps"]' target="racerResponse">
+			<error-mapping sourceType="HTTP:BAD_REQUEST" targetType="APP:BAD_ENDPOINT" />
+			<error-mapping sourceType="HTTP:UNAUTHORIZED" targetType="APP:BAD_ENDPOINT" />
+			<error-mapping sourceType="HTTP:NOT_FOUND" targetType="APP:BAD_ENDPOINT" />
+			<error-mapping sourceType="HTTP:UNSUPPORTED_MEDIA_TYPE" targetType="APP:BAD_ENDPOINT" />
+			<error-mapping sourceType="HTTP:METHOD_NOT_ALLOWED" targetType="APP:BAD_ENDPOINT" />
+			<error-mapping sourceType="HTTP:BAD_GATEWAY" targetType="APP:ENDPOINT_DOWN" />
+			<error-mapping sourceType="HTTP:SERVICE_UNAVAILABLE" targetType="APP:ENDPOINT_DOWN" />
+			<error-mapping sourceType="HTTP:TIMEOUT" targetType="APP:ENDPOINT_DOWN" />
+			<error-mapping sourceType="HTTP:INTERNAL_SERVER_ERROR" targetType="APP:ENDPOINT_DOWN" />
+			<error-mapping sourceType="HTTP:CONNECTIVITY" targetType="APP:ENDPOINT_DOWN" />
+			<error-mapping sourceType="HTTP:NOT_ACCEPTABLE" targetType="APP:BAD_ENDPOINT" />
+			<error-mapping sourceType="HTTP:TOO_MANY_REQUESTS" targetType="APP:ENDPOINT_DOWN" />
 			<http:body ><![CDATA[#[%dw 2.0
 output text/plain
 ---

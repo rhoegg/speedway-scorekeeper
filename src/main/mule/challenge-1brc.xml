@@ -58,6 +58,18 @@ randomTemperatures(vars.count)]]></ee:set-payload>
 		<logger level="DEBUG" doc:name="DEBUG" doc:id="bfbaf2da-86ba-4cee-9f57-868eb273e2bc" message="Timing racer #[vars.racerId]" category="1brc.timer" />
 		<set-variable value="#[now()]" doc:name="officialStart" doc:id="c586b7c2-7d01-4fbf-9176-aeb17fef9c37" variableName="officialStart" />
 		<http:request method="POST" doc:name="endpoint POST /1brc" doc:id="595b5aff-46cf-4fd6-9ed1-077f9b12ce18" url='#["$(vars.endpoint)/1brc"]' requestStreamingMode="ALWAYS" responseTimeout="${racer.timeout}">
+			<error-mapping sourceType="HTTP:BAD_REQUEST" targetType="APP:BAD_ENDPOINT" />
+			<error-mapping sourceType="HTTP:UNAUTHORIZED" targetType="APP:BAD_ENDPOINT" />
+			<error-mapping sourceType="HTTP:NOT_FOUND" targetType="APP:BAD_ENDPOINT" />
+			<error-mapping sourceType="HTTP:UNSUPPORTED_MEDIA_TYPE" targetType="APP:BAD_ENDPOINT" />
+			<error-mapping sourceType="HTTP:METHOD_NOT_ALLOWED" targetType="APP:BAD_ENDPOINT" />
+			<error-mapping sourceType="HTTP:BAD_GATEWAY" targetType="APP:ENDPOINT_DOWN" />
+			<error-mapping sourceType="HTTP:SERVICE_UNAVAILABLE" targetType="APP:ENDPOINT_DOWN" />
+			<error-mapping sourceType="HTTP:TIMEOUT" targetType="APP:ENDPOINT_DOWN" />
+			<error-mapping sourceType="HTTP:INTERNAL_SERVER_ERROR" targetType="APP:ENDPOINT_DOWN" />
+			<error-mapping sourceType="HTTP:CONNECTIVITY" targetType="APP:ENDPOINT_DOWN" />
+			<error-mapping sourceType="HTTP:NOT_ACCEPTABLE" targetType="APP:BAD_ENDPOINT" />
+			<error-mapping sourceType="HTTP:TOO_MANY_REQUESTS" targetType="APP:ENDPOINT_DOWN" />
 		</http:request>
 		<logger level="DEBUG" doc:name="DEBUG" doc:id="eed36b48-b16d-4dd6-aaaf-ba30e6847b81" message="Got response from racer #[vars.racerId]" category="1brc.timer" />
 		<set-variable value='#[((now() - vars.officialStart) as Number {unit: "nanos"}) / 1000000000]' doc:name="officialTime" doc:id="3a1b8e09-c13e-4332-a681-f2c0d2104d1c" variableName="officialTime" />
