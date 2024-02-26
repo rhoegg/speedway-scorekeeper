@@ -15,14 +15,14 @@ http://www.mulesoft.org/schema/mule/s3 http://www.mulesoft.org/schema/mule/s3/cu
 		<set-variable value="#[payload.racerId]" doc:name="racerId" doc:id="77cb6863-41c0-42f8-8ea9-d79852e8d98c" variableName="racerId" />
 		<set-variable value="#[uuid()]" doc:name="raceId" doc:id="f32dc870-dc95-4adb-b0c9-23d68fc576a0" variableName="raceId" />
 		<set-variable value="#[payload.count]" doc:name="count" doc:id="b2a8623e-75fd-49ce-84bc-03b7a9cc7ab6" variableName="count" />
-		<choice doc:name="Choice" doc:id="c38a37de-99b3-4113-ab40-f30c9f5124b1" >
+		<choice doc:name="Choice" doc:id="c38a37de-99b3-4113-ab40-f30c9f5124b1">
 			<when expression="#[vars.count &gt;= 1000000]">
-				<logger level="DEBUG" doc:name="DEBUG" doc:id="1aac5a76-0780-4ba1-9590-604901ee3101" message="Using AWS timer for large request #[vars.count] for racer #[vars.racerId]" category="1brc.score"/>
-				<http:request method="POST" doc:name="POST /timed/temperature-averages" doc:id="53c86ed4-f99a-4adf-8014-d1992d562f56" config-ref="timerHttpRequestConfig" path="/timed/temperature-averages" responseTimeout="${racer.timeout}"/>
-				<set-variable value="#[payload.time]" doc:name="officialTime" doc:id="740b0c99-88c0-48c5-95ab-015417c8d309" variableName="officialTime"/>
-				<flow-ref doc:name="fetchCachedAverages" doc:id="d61c8ace-930a-47b5-844a-57afbdd32df7" name="fetchCachedAverages" target="averages"/>
+				<logger level="DEBUG" doc:name="DEBUG" doc:id="1aac5a76-0780-4ba1-9590-604901ee3101" message="Using AWS timer for large request #[vars.count] for racer #[vars.racerId]" category="1brc.score" />
+				<flow-ref doc:name="Flow Reference" doc:id="72ffd52a-35ee-4fca-be4a-5f570793e3c6" name="timeRacerAws" />
+				<set-variable value="#[payload.time]" doc:name="officialTime" doc:id="740b0c99-88c0-48c5-95ab-015417c8d309" variableName="officialTime" />
+				<flow-ref doc:name="fetchCachedAverages" doc:id="d61c8ace-930a-47b5-844a-57afbdd32df7" name="fetchCachedAverages" target="averages" />
 			</when>
-			<otherwise >
+			<otherwise>
 				<flow-ref doc:name="timeRacer" doc:id="74eaf682-624b-4513-b80e-1830feae7980" name="timeRacer" />
 			</otherwise>
 		</choice>
@@ -43,6 +43,17 @@ output application/json
 			</ee:message>
 		</ee:transform>
 	</flow>
+	<sub-flow name="timeRacerAws" doc:id="cd95a66e-35fc-4978-9029-c2ed4ea48ef5" >
+		<try doc:name="Try" doc:id="26b42f94-bb7f-4698-9ab3-7aeca115afd9" >
+			<http:request method="POST" doc:name="POST /timed/temperature-averages" doc:id="53c86ed4-f99a-4adf-8014-d1992d562f56" config-ref="timerHttpRequestConfig" path="/timed/temperature-averages" responseTimeout="${racer.timeout}" />
+			<error-handler >
+				<on-error-continue enableNotifications="true" logException="false" doc:name="On Error Continue" doc:id="dbf3992d-5c48-42b5-a111-1882d061a21f" type="HTTP:BAD_REQUEST, HTTP:INTERNAL_SERVER_ERROR, HTTP:TIMEOUT">
+					<logger level="INFO" doc:name="Logger" doc:id="64968f0c-bbf2-40d2-a470-48dcbf267dd6" message="#[output application/json --- error.errorMessage.payload]"/>
+					<raise-error doc:name="APP:ENDPOINT_DOWN" doc:id="8dfafb62-dab6-456f-857b-eab106c92282" type="APP:ENDPOINT_DOWN" description="#[error.errorMessage.payload.error]"/>
+				</on-error-continue>
+			</error-handler>
+		</try>
+	</sub-flow>
 	<sub-flow name="timeRacer" doc:id="abec5f11-3f50-4359-bfe1-bc8725b83388" >
 		<logger level="DEBUG" doc:name="DEBUG" doc:id="2828afdd-6526-4056-862f-2eea74e968df" message="Preparing random input of #[vars.count] samples" category="1brc.prepare" />
 		<ee:transform doc:name="randomTemperatures" doc:id="91c6ec2d-60b6-4d95-8501-764ca7b5c37b">

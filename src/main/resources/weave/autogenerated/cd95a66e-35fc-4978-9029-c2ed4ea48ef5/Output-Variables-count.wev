@@ -1,0 +1,4 @@
+%dw 2.0
+
+type auto_cd95a66e_35fc_4978_9029_c2ed4ea48ef5_Output_Variables_count = Number
+
