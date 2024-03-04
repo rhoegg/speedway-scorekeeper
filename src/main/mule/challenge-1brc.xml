@@ -18,7 +18,7 @@ http://www.mulesoft.org/schema/mule/s3 http://www.mulesoft.org/schema/mule/s3/cu
 		<choice doc:name="Choice" doc:id="c38a37de-99b3-4113-ab40-f30c9f5124b1">
 			<when expression="#[vars.count &gt;= 1000000]">
 				<logger level="DEBUG" doc:name="DEBUG" doc:id="1aac5a76-0780-4ba1-9590-604901ee3101" message="Using AWS timer for large request #[vars.count] for racer #[vars.racerId]" category="1brc.score" />
-				<flow-ref doc:name="Flow Reference" doc:id="72ffd52a-35ee-4fca-be4a-5f570793e3c6" name="timeRacerAws" />
+				<flow-ref doc:name="timeRacerAws" doc:id="72ffd52a-35ee-4fca-be4a-5f570793e3c6" name="timeRacerAws" />
 				<set-variable value="#[payload.time]" doc:name="officialTime" doc:id="740b0c99-88c0-48c5-95ab-015417c8d309" variableName="officialTime" />
 				<flow-ref doc:name="fetchCachedAverages" doc:id="d61c8ace-930a-47b5-844a-57afbdd32df7" name="fetchCachedAverages" target="averages" />
 			</when>
@@ -68,7 +68,7 @@ randomTemperatures(vars.count)]]></ee:set-payload>
 		<set-variable value='#[%dw 2.0&#10;output application/json&#10;&#10;var grouped = payload groupBy $.station&#10;	pluck (measurements, station) -&gt; &#10;		{ station: station, temperature: avg(measurements map $.temperature) }&#10;---&#10;grouped orderBy $.station map {&#10;	station: $.station,&#10;	temperature: $.temperature as String { format: "#.00000" } as Number&#10;}]' doc:name="averages" doc:id="5d79d891-faea-4bd2-8055-0a20caa3245e" variableName="averages" />
 		<logger level="DEBUG" doc:name="DEBUG" doc:id="bfbaf2da-86ba-4cee-9f57-868eb273e2bc" message="Timing racer #[vars.racerId]" category="1brc.timer" />
 		<set-variable value="#[now()]" doc:name="officialStart" doc:id="c586b7c2-7d01-4fbf-9176-aeb17fef9c37" variableName="officialStart" />
-		<http:request method="POST" doc:name="endpoint POST /1brc" doc:id="595b5aff-46cf-4fd6-9ed1-077f9b12ce18" url='#["$(vars.endpoint)/1brc"]' requestStreamingMode="ALWAYS" responseTimeout="${racer.timeout}">
+		<http:request method="POST" doc:name="endpoint POST /temperatures" doc:id="595b5aff-46cf-4fd6-9ed1-077f9b12ce18" url='#["$(vars.endpoint)/temperatures"]' requestStreamingMode="ALWAYS" responseTimeout="${racer.timeout}">
 			<error-mapping sourceType="HTTP:BAD_REQUEST" targetType="APP:BAD_ENDPOINT" />
 			<error-mapping sourceType="HTTP:UNAUTHORIZED" targetType="APP:BAD_ENDPOINT" />
 			<error-mapping sourceType="HTTP:NOT_FOUND" targetType="APP:BAD_ENDPOINT" />
