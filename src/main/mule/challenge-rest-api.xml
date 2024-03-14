@@ -38,7 +38,7 @@ output application/json
 			<error-mapping sourceType="HTTP:NOT_ACCEPTABLE" targetType="APP:BAD_ENDPOINT" />
 			<error-mapping sourceType="HTTP:TOO_MANY_REQUESTS" targetType="APP:ENDPOINT_DOWN" />
 		</http:request>
-		<validation:is-true doc:name="check racer ID" doc:id="2bdfb684-c20c-4046-bb75-dcb03933d457" message="incorrect racer ID in Start Race response" expression="#[payload.racerId == vars.racerId]" >
+		<validation:is-true doc:name="check racer ID" doc:id="2bdfb684-c20c-4046-bb75-dcb03933d457" message='#[output text/plain --- "incorrect racer ID in Start Race response [$(payload.racerId)]"]' expression="#[payload.racerId == vars.racerId]" >
 			<error-mapping sourceType="VALIDATION:INVALID_BOOLEAN" targetType="APP:BADRACER" />
 		</validation:is-true>
 		<set-variable value="#[payload.id]" doc:name="raceId" doc:id="ca6b1832-ed32-48af-a864-7d40c5483331" variableName="raceId"/>
