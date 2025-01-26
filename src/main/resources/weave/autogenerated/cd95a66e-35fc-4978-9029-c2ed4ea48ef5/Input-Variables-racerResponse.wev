@@ -1,8 +1,0 @@
-%dw 2.0
-
-type auto_cd95a66e_35fc_4978_9029_c2ed4ea48ef5_Input_Variables_racerResponse = {
-  racerId: String, 
-  averages: Array<{    station: String,     temperature: Number,     _?: Any  }>, 
-  _?: Any
-}
-

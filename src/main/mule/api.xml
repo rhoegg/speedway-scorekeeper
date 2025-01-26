@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<mule xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd ">
-    <apikit:config name="scorekeeper-system-api-config" api="resource::ae6d7954-6fc2-4f3e-8777-80ff8aabd859:scorekeeper-system-api:1.0.3:raml:zip:scorekeeper-system-api.raml" outboundHeadersMapName="outboundHeaders" httpStatusVarName="httpStatus" />
-    <flow name="scorekeeper-system-api-main">
+<mule xmlns:tls="http://www.mulesoft.org/schema/mule/tls" xmlns:whisperer="http://www.mulesoft.org/schema/mule/whisperer" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd 
+http://www.mulesoft.org/schema/mule/whisperer http://www.mulesoft.org/schema/mule/whisperer/current/mule-whisperer.xsd
+http://www.mulesoft.org/schema/mule/tls http://www.mulesoft.org/schema/mule/tls/current/mule-tls.xsd">
+    <apikit:config name="scorekeeper-system-api-config" api="resource::ae6d7954-6fc2-4f3e-8777-80ff8aabd859:scorekeeper-system-api:2.0.0:raml:zip:scorekeeper-system-api.raml" outboundHeadersMapName="outboundHeaders" httpStatusVarName="httpStatus" />
+	<flow name="scorekeeper-system-api-main">
         <http:listener config-ref="httpListenerConfig" path="/api/*">
             <http:response statusCode="#[vars.httpStatus default 200]">
                 <http:headers><![CDATA[#[vars.outboundHeaders default {}]]]></http:headers>
@@ -120,70 +122,7 @@ output application/json
             </on-error-propagate>
         </error-handler>
     </flow>
-    <flow name="post:\timed\rest-api:application\json:scorekeeper-system-api-config">
-		<flow-ref doc:name="scoreRestApi" doc:id="03922b39-6785-487c-a925-46684a01f160" name="scoreRestApi" />
-        <error-handler>
-            <on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="7c5a3e1e-99bb-48fc-849d-29514eda0aa6" type="APP:BADRACER, APP:BADTOKEN, APP:BAD_ENDPOINT">
-                <set-variable value="400" doc:name="httpStatus = 400" doc:id="45971fe0-b32a-4d88-99c5-38dedb906a69" variableName="httpStatus" />
-                <ee:transform doc:name="error response" doc:id="bd3b70b3-5fe7-4ae1-bee4-1e9c3e585414">
-                    <ee:message>
-                        <ee:set-payload><![CDATA[%dw 2.0
-output application/json
----
-{
-	error: "non-compliant endpoint",
-	detail: error.description
-}]]></ee:set-payload>
-                    </ee:message>
-                </ee:transform>
-            </on-error-continue>
-			<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="76f7d12b-3a4e-4554-b78b-897f0977b86b" type="APP:ENDPOINT_DOWN">
-				<set-variable value="400" doc:name="httpStatus = 400" doc:id="0f3f2a79-15ff-413d-b5ac-4eefc2bc8655" variableName="httpStatus" />
-				<ee:transform doc:name="error response" doc:id="7485883e-4c3b-4dca-baaf-c9c2e9848611" >
-					<ee:message >
-						<ee:set-payload ><![CDATA[%dw 2.0
-output application/json
----
-{
-	error: "endpoint down",
-	detail: error.description
-}]]></ee:set-payload>
-					</ee:message>
-				</ee:transform>
-			</on-error-continue>
-        </error-handler>
-    </flow>
-    <flow name="post:\timed\temperature-averages:application\json:scorekeeper-system-api-config">
-        <flow-ref doc:name="score1brc" doc:id="2156ab7e-d564-4920-ad03-d5c04f516603" name="score1brc" />
-        <error-handler>
-            <on-error-propagate enableNotifications="true" logException="false" doc:name="On Error Propagate" doc:id="9b862a60-4f54-4ea2-90c1-120ae0197531" type="APP:BADRACER, APP:INVALID_RACE_RESULT">
-                <set-variable value="400" doc:name="httpStatus = 400" doc:id="da823d6c-64b7-43bf-8853-1e3efc377773" variableName="httpStatus" />
-				<ee:transform doc:name="error response" doc:id="cec6cb7a-a22c-4b84-a16a-8cbda6b6a507" >
-					<ee:message >
-						<ee:set-payload ><![CDATA[%dw 2.0
-output application/json
----
-{
-	error: "non-compliant endpoint",
-	detail: error.description
-}]]></ee:set-payload>
-					</ee:message>
-				</ee:transform>
-            </on-error-propagate>
-			<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="a983e4d4-9168-4063-ac6f-1bf727e20792" type="APP:ENDPOINT_DOWN" >
-				<set-variable value="400" doc:name="httpStatus = 400" doc:id="7922fe62-4ff9-4583-97c7-12ba00349a18" variableName="httpStatus" />
-				<ee:transform doc:name="error response" doc:id="c6f8f64a-1e1c-4f38-bd8a-9661bfe8d6f8" >
-					<ee:message >
-						<ee:set-payload ><![CDATA[%dw 2.0
-output application/json
----
-{
-	error: "endpoint down",
-	detail: error.description
-}]]></ee:set-payload>
-					</ee:message>
-				</ee:transform>
-			</on-error-continue>
-        </error-handler>
+    <flow name="post:\evaluate\name:application\json:scorekeeper-system-api-config">
+		<flow-ref doc:name="checkRacerName" doc:id="24d35610-45c4-4036-9412-7ff8b532e79c" name="checkRacerName"/>
     </flow>
 </mule>

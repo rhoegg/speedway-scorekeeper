@@ -4,19 +4,9 @@ http:
 anypoint:
   api:
     id: "1"
-
-aws:
-  accessKey: xxxx
-  secretKey: yyyy
-
-timer:
-  host: "3.139.90.246"
-  port: "80"
-  protocol: HTTP
   
 racer:
   timeout: "21600000" # milliseconds
 
-challenge:
-  '1brc':
-    tolerance: "0.00002"
+openai:
+  apikey: xxxxx
