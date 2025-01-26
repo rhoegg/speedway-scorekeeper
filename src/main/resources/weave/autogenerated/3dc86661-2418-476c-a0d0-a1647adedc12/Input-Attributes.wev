@@ -1,6 +1,6 @@
 %dw 2.0
 
-type auto_0c6e6d88_24bd_4cd6_9f05_0509884248b0_Output_Attributes = {|
+type auto_3dc86661_2418_476c_a0d0_a1647adedc12_Input_Attributes = {|
   clientCertificate?: {|
     publicKey?: {|  |}, 
     "type"?: String, 

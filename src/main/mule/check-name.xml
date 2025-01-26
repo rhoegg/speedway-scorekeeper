@@ -1,7 +1,73 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<mule xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
-	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd">
-	<sub-flow name="checkRacerName" doc:id="0c6e6d88-24bd-4cd6-9f05-0509884248b0" />
+<mule xmlns:validation="http://www.mulesoft.org/schema/mule/validation"
+	xmlns:ms-aichain="http://www.mulesoft.org/schema/mule/ms-aichain" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:whisperer="http://www.mulesoft.org/schema/mule/whisperer"
+	xmlns:file="http://www.mulesoft.org/schema/mule/file" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:racer-api="http://www.mulesoft.org/schema/mule/racer-api" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/racer-api http://www.mulesoft.org/schema/mule/racer-api/current/mule-racer-api.xsd
+http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/file/current/mule-file.xsd
+http://www.mulesoft.org/schema/mule/whisperer http://www.mulesoft.org/schema/mule/whisperer/current/mule-whisperer.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/ms-aichain http://www.mulesoft.org/schema/mule/ms-aichain/current/mule-ms-aichain.xsd
+http://www.mulesoft.org/schema/mule/validation http://www.mulesoft.org/schema/mule/validation/current/mule-validation.xsd">
+	<sub-flow name="checkRacerName" doc:id="0c6e6d88-24bd-4cd6-9f05-0509884248b0" >
+	<set-variable value="#[payload.endpoint]" doc:name="endpoint" doc:id="395af07a-d03c-4034-ba00-fb6d65ec8a6b" variableName="endpoint"/>
+		<http:request method="GET" doc:name="endpoint GET /name" doc:id="42edd387-0f28-4f28-b90d-074e34f8acd2" url='#["$(vars.endpoint)/name"]' target="racerNameAudio">
+			<error-mapping sourceType="HTTP:BAD_REQUEST" targetType="APP:BAD_ENDPOINT" />
+			<error-mapping sourceType="HTTP:UNAUTHORIZED" targetType="APP:BAD_ENDPOINT" />
+			<error-mapping sourceType="HTTP:NOT_FOUND" targetType="APP:BAD_ENDPOINT" />
+			<error-mapping sourceType="HTTP:UNSUPPORTED_MEDIA_TYPE" targetType="APP:BAD_ENDPOINT" />
+			<error-mapping sourceType="HTTP:METHOD_NOT_ALLOWED" targetType="APP:BAD_ENDPOINT" />
+			<error-mapping sourceType="HTTP:BAD_GATEWAY" targetType="APP:ENDPOINT_DOWN" />
+			<error-mapping sourceType="HTTP:SERVICE_UNAVAILABLE" targetType="APP:ENDPOINT_DOWN" />
+			<error-mapping sourceType="HTTP:TIMEOUT" targetType="APP:ENDPOINT_DOWN" />
+			<error-mapping sourceType="HTTP:INTERNAL_SERVER_ERROR" targetType="APP:ENDPOINT_DOWN" />
+			<error-mapping sourceType="HTTP:CONNECTIVITY" targetType="APP:ENDPOINT_DOWN" />
+			<error-mapping sourceType="HTTP:NOT_ACCEPTABLE" targetType="APP:BAD_ENDPOINT" />
+			<error-mapping sourceType="HTTP:TOO_MANY_REQUESTS" targetType="APP:ENDPOINT_DOWN" />
+		</http:request>
+		<whisperer:speech-to-text doc:name="racerNameTranscription" doc:id="d2bb8732-b410-4bd8-b84a-8cb4ed8e74fb" config-ref="MAC_Whisperer_Config" target="racerNameTranscription">
+			<whisperer:audio-content ><![CDATA[#[vars.racerNameAudio]]]></whisperer:audio-content>
+		</whisperer:speech-to-text>
+		<choice doc:name="Choice" doc:id="c4977fb6-9f58-4cea-9931-5a89853ea248" >
+			<when expression="#[trim(lower(vars.racerNameTranscription)) == trim(lower(payload.name))]">
+				<ee:transform doc:name="perfect 10" doc:id="0420a818-7125-43eb-9eef-feb43f96d997" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	score: 10
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</when>
+			<otherwise >
+				<logger level="DEBUG" doc:name="DEBUG" doc:id="3079b1b3-edac-4b68-aef4-764c25fac9cf" message="Transcribed racer name #[vars.racerNameTranscription] for racer #[payload.name]" category="scorekeeper-sapi.check-name" />
+				<flow-ref doc:name="checkRacerName_scoreImperfectMatch" doc:id="114662c8-2e1d-4e48-bd3e-05b367cf865c" name="checkRacerName_scoreImperfectMatch"/>
+			</otherwise>
+		</choice>
+	</sub-flow>
+	<sub-flow name="checkRacerName_scoreImperfectMatch" doc:id="3dc86661-2418-476c-a0d0-a1647adedc12" >
+		<set-variable value="#[vars.racerNameTranscription]" doc:name="name1" doc:id="f2d2f9f2-45c6-429e-bd34-221d479b031f" variableName="name1"/>
+		<set-variable value="#[payload.name]" doc:name="name2" doc:id="e93e8580-d6d7-4b6d-a3f3-dd21fa3f1781" variableName="name2"/>
+		<parse-template doc:name="similarity prompt" doc:id="1a0319b3-a5a4-4e13-94e5-7601cb8bd253" location="prompts/compare-transcription.txt" target="prompt"/>
+		<ms-aichain:chat-answer-prompt doc:name="Chat answer prompt" doc:id="4ca28a03-80df-4e43-be73-b500276d4bd1" config-ref="MuleSoft_AI_Chain_Config" target="llmOutput">
+			<ms-aichain:prompt ><![CDATA[#[vars.prompt]]]></ms-aichain:prompt>
+		</ms-aichain:chat-answer-prompt>
+		<validation:is-number numberType="FLOAT" doc:name="number between 0 and 10" doc:id="7e395334-08f5-4885-881d-c0ee780e937e" value="#[vars.llmOutput.response]" minValue="0" maxValue="10">
+			<error-mapping sourceType="VALIDATION:INVALID_NUMBER" targetType="APP:LLM_FAILURE" />
+		</validation:is-number>
+		<ee:transform doc:name="score" doc:id="9cc366cc-f5c3-4b3b-bbe8-966e421457c7" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	score: vars.llmOutput.response as Number
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</sub-flow>
 </mule>
