@@ -124,5 +124,39 @@ output application/json
     </flow>
     <flow name="post:\evaluate\name:application\json:scorekeeper-system-api-config">
 		<flow-ref doc:name="checkRacerName" doc:id="24d35610-45c4-4036-9412-7ff8b532e79c" name="checkRacerName"/>
+		<error-handler>
+			<on-error-continue enableNotifications="true" logException="false" doc:name="On Error Continue" doc:id="ff2b714a-4d78-45cc-92f2-9ab72e1b4ca1" type="APP:BAD_ENDPOINT, APP:ENDPOINT_DOWN">
+				<ee:transform doc:name="HTTP response" doc:id="1f67906b-7dfd-443e-ade7-e8d76c9570be" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	error: "racer endpoint unreachable",
+	details: error.detailedDescription
+}]]></ee:set-payload>
+					</ee:message>
+					<ee:variables >
+						<ee:set-variable variableName="httpStatus" ><![CDATA[%dw 2.0
+output application/java
+---
+400]]></ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+			</on-error-continue>
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="6f00a74b-f453-441b-a677-d0bff3ca4e64" >
+				<ee:transform doc:name="HTTP response" doc:id="5f806900-298c-4648-8dc7-737fea764824" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	error: "internal error checking racer name: $(error.description)",
+	details: error
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</on-error-propagate>
+		</error-handler>
     </flow>
 </mule>

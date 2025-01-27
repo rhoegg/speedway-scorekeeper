@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:munit="http://www.mulesoft.org/schema/mule/munit" xmlns:munit-tools="http://www.mulesoft.org/schema/mule/munit-tools"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xsi:schemaLocation="
+		http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+		http://www.mulesoft.org/schema/mule/munit http://www.mulesoft.org/schema/mule/munit/current/mule-munit.xsd
+		http://www.mulesoft.org/schema/mule/munit-tools  http://www.mulesoft.org/schema/mule/munit-tools/current/mule-munit-tools.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<munit:config name="check-name-tests.xml" />
+	<http:request-config name="checkNameHttpRequestConfig" doc:name="HTTP Request configuration" doc:id="f22fb088-4cab-444c-bf6b-562c373255d3" >
+		<http:request-connection host="localhost" port="${http.port}" />
+	</http:request-config>
+	<munit:test name="badEndpoint_shouldRespond500" doc:id="6e8a9c57-b6a6-4128-80e9-81ee64213faa" >
+		<munit:enable-flow-sources >
+			<munit:enable-flow-source value="scorekeeper-system-api-main" />
+			<munit:enable-flow-source value="post:\evaluate\name:application\json:scorekeeper-system-api-config" />
+		</munit:enable-flow-sources>
+		<munit:execution >
+			<ee:transform doc:name="bad endpoint request" doc:id="e70f0e6f-84bf-44be-b8dc-8db9c7e28bf8" >
+				<ee:message >
+					<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	name: "MUnit Racer",
+	endpoint: "http://localhost:1/racer-name"
+}]]></ee:set-payload>
+				</ee:message>
+			</ee:transform>
+			<http:request method="POST" doc:name="POST /evaluate/name" doc:id="50762d1b-23b9-4045-93f8-27269a01e4a3" path="/api/evaluate/name" config-ref="checkNameHttpRequestConfig">
+				<http:response-validator >
+					<http:success-status-code-validator values="200,400" />
+				</http:response-validator>
+			</http:request>
+		</munit:execution>
+		<munit:validation >
+			<munit-tools:assert-equals doc:name="HTTP status == 400" doc:id="1577fe49-25fa-4169-b50b-e74205e2af09" actual="#[attributes.statusCode]" expected="#[400]" message="HTTP status code"/>
+			<munit-tools:assert doc:name="response body error" doc:id="e6a3b63f-9489-48e0-a276-c4ac778bb5b6" message="response body error">
+				<munit-tools:that ><![CDATA[#[import * from dw::test::Asserts 
+ ---
+payload.error must contain("racer endpoint unreachable")]]]></munit-tools:that>
+			</munit-tools:assert>
+			<munit-tools:assert doc:name="response body details" doc:id="fe017664-9398-4727-a17d-127ac3c94863" message="response body details">
+				<munit-tools:that ><![CDATA[#[import * from dw::test::Asserts 
+ ---
+payload.details must contain("http://localhost:1/racer-name")]]]></munit-tools:that>
+			</munit-tools:assert>
+		</munit:validation>
+	</munit:test>
+
+</mule>

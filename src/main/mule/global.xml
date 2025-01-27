@@ -22,4 +22,5 @@ http://www.mulesoft.org/schema/mule/ms-aichain http://www.mulesoft.org/schema/mu
 		<whisperer:open-ai-connection apiKey="${openai.apikey}" />
 	</whisperer:config>
 	<ms-aichain:config name="MuleSoft_AI_Chain_Config" llmType="OPENAI" configType="Environment Variables" modelName="gpt-4o" doc:name="MuleSoft AI Chain Config" doc:id="e219617b-c530-49ed-90bf-4219e567644a" filePath="-"/>
+	<global-property doc:name="Global Property" doc:id="18beaf80-1249-4cf0-b38c-c0a44b9e3c1a" name="openai.apikey" value="${OPENAI_API_KEY}" />
 </mule>
