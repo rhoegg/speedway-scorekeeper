@@ -23,4 +23,13 @@ http://www.mulesoft.org/schema/mule/ms-aichain http://www.mulesoft.org/schema/mu
 	</whisperer:config>
 	<ms-aichain:config name="MuleSoft_AI_Chain_Config" llmType="OPENAI" configType="Environment Variables" modelName="gpt-4o" doc:name="MuleSoft AI Chain Config" doc:id="e219617b-c530-49ed-90bf-4219e567644a" filePath="-"/>
 	<global-property doc:name="Global Property" doc:id="18beaf80-1249-4cf0-b38c-c0a44b9e3c1a" name="openai.apikey" value="${OPENAI_API_KEY}" />
+	<flow name="sandboxFlow1" doc:id="b149a976-7df9-4caa-9f61-ead5cc7cee31" >
+		<set-variable value="sage" doc:name="voice" doc:id="1759e19f-337b-4cff-8bfa-977e67f05e48" variableName="voice"/>
+		<set-payload value='What nationality is the team that finished in position 4 in 2014 round 6?' doc:name="Set Payload" doc:id="d6d5088f-257a-497a-90bb-a17b6ee6b21c" />
+		<whisperer:text-to-speech doc:name="Text to Speech" doc:id="d25ffff7-40fa-4880-84e9-42fcbc828f42" config-ref="MAC_Whisperer_Config">
+			<whisperer:generation-options modelName="tts-1-hd" voice="#[vars.voice]"/>
+		</whisperer:text-to-speech>
+		<file:write doc:name="Write" doc:id="b4713a79-334f-4c35-8851-b93a1cc142b8" path='#["/Users/rhoegg/Desktop/f1-example-1-$(vars.voice).mp3"]'/>
+		<logger level="INFO" doc:name="Logger" doc:id="f0b0577d-3a4d-4b72-a5ac-ab0768f61a3e" message="done"/>
+	</flow>
 </mule>

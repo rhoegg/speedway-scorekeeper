@@ -1,9 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<mule xmlns:tls="http://www.mulesoft.org/schema/mule/tls" xmlns:whisperer="http://www.mulesoft.org/schema/mule/whisperer" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd 
-http://www.mulesoft.org/schema/mule/whisperer http://www.mulesoft.org/schema/mule/whisperer/current/mule-whisperer.xsd
-http://www.mulesoft.org/schema/mule/tls http://www.mulesoft.org/schema/mule/tls/current/mule-tls.xsd">
-    <apikit:config name="scorekeeper-system-api-config" api="resource::ae6d7954-6fc2-4f3e-8777-80ff8aabd859:scorekeeper-system-api:2.0.0:raml:zip:scorekeeper-system-api.raml" outboundHeadersMapName="outboundHeaders" httpStatusVarName="httpStatus" />
-	<flow name="scorekeeper-system-api-main">
+<mule xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:tls="http://www.mulesoft.org/schema/mule/tls" xmlns:whisperer="http://www.mulesoft.org/schema/mule/whisperer" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd  http://www.mulesoft.org/schema/mule/whisperer http://www.mulesoft.org/schema/mule/whisperer/current/mule-whisperer.xsd http://www.mulesoft.org/schema/mule/tls http://www.mulesoft.org/schema/mule/tls/current/mule-tls.xsd">
+    <apikit:config name="scorekeeper-system-api-config" api="resource::ae6d7954-6fc2-4f3e-8777-80ff8aabd859:scorekeeper-system-api:2.0.2:raml:zip:scorekeeper-system-api.raml" outboundHeadersMapName="outboundHeaders" httpStatusVarName="httpStatus" />
+    <flow name="scorekeeper-system-api-main">
         <http:listener config-ref="httpListenerConfig" path="/api/*">
             <http:response statusCode="#[vars.httpStatus default 200]">
                 <http:headers><![CDATA[#[vars.outboundHeaders default {}]]]></http:headers>
@@ -123,40 +121,46 @@ output application/json
         </error-handler>
     </flow>
     <flow name="post:\evaluate\name:application\json:scorekeeper-system-api-config">
-		<flow-ref doc:name="checkRacerName" doc:id="24d35610-45c4-4036-9412-7ff8b532e79c" name="checkRacerName"/>
-		<error-handler>
-			<on-error-continue enableNotifications="true" logException="false" doc:name="On Error Continue" doc:id="ff2b714a-4d78-45cc-92f2-9ab72e1b4ca1" type="APP:BAD_ENDPOINT, APP:ENDPOINT_DOWN">
-				<ee:transform doc:name="HTTP response" doc:id="1f67906b-7dfd-443e-ade7-e8d76c9570be" >
-					<ee:message >
-						<ee:set-payload ><![CDATA[%dw 2.0
+        <flow-ref doc:name="checkRacerName" doc:id="24d35610-45c4-4036-9412-7ff8b532e79c" name="checkRacerName" />
+        <error-handler>
+            <on-error-continue enableNotifications="true" logException="false" doc:name="On Error Continue" doc:id="ff2b714a-4d78-45cc-92f2-9ab72e1b4ca1" type="APP:BAD_ENDPOINT, APP:ENDPOINT_DOWN">
+                <ee:transform doc:name="HTTP response" doc:id="1f67906b-7dfd-443e-ade7-e8d76c9570be">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
 output application/json
 ---
 {
 	error: "racer endpoint unreachable",
 	details: error.detailedDescription
 }]]></ee:set-payload>
-					</ee:message>
-					<ee:variables >
-						<ee:set-variable variableName="httpStatus" ><![CDATA[%dw 2.0
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus"><![CDATA[%dw 2.0
 output application/java
 ---
 400]]></ee:set-variable>
-					</ee:variables>
-				</ee:transform>
-			</on-error-continue>
-			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="6f00a74b-f453-441b-a677-d0bff3ca4e64" >
-				<ee:transform doc:name="HTTP response" doc:id="5f806900-298c-4648-8dc7-737fea764824" >
-					<ee:message >
-						<ee:set-payload ><![CDATA[%dw 2.0
+                    </ee:variables>
+                </ee:transform>
+            </on-error-continue>
+            <on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="6f00a74b-f453-441b-a677-d0bff3ca4e64">
+                <ee:transform doc:name="HTTP response" doc:id="5f806900-298c-4648-8dc7-737fea764824">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
 output application/json
 ---
 {
 	error: "internal error checking racer name: $(error.description)",
 	details: error
 }]]></ee:set-payload>
-					</ee:message>
-				</ee:transform>
-			</on-error-propagate>
-		</error-handler>
+                    </ee:message>
+                </ee:transform>
+            </on-error-propagate>
+        </error-handler>
+    </flow>
+    <flow name="get:\evaluate\simple-question:scorekeeper-system-api-config">
+		<flow-ref doc:name="generateFormulaOneQuestion" doc:id="cfc1158e-cc53-4c83-a0a8-ae4e3f934513" name="generateFormulaOneQuestion" />
+    </flow>
+	<flow name="post:\evaluate\simple-question:application\json:scorekeeper-system-api-config">
+		<flow-ref doc:name="checkFormulaOneQuestion" doc:id="a6ab4f57-eec4-4cc4-ba00-a602851cfc34" name="checkFormulaOneQuestion"/>
     </flow>
 </mule>
