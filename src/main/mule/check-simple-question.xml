@@ -1,14 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<mule xmlns:file="http://www.mulesoft.org/schema/mule/file" xmlns:whisperer="http://www.mulesoft.org/schema/mule/whisperer"
-	xmlns:os="http://www.mulesoft.org/schema/mule/os"
-	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+<mule xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:file="http://www.mulesoft.org/schema/mule/file"
+	xmlns:whisperer="http://www.mulesoft.org/schema/mule/whisperer"
+	xmlns:os="http://www.mulesoft.org/schema/mule/os" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
 http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
 http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/current/mule-os.xsd
 http://www.mulesoft.org/schema/mule/whisperer http://www.mulesoft.org/schema/mule/whisperer/current/mule-whisperer.xsd
-http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/file/current/mule-file.xsd">
+http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/file/current/mule-file.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd">
 	<ee:object-store-caching-strategy name="referenceDataCache" doc:name="Caching Strategy" doc:id="d75ac186-1b7a-4d85-9788-f30ce928ed8d" keyGenerationExpression='#["f1Results"]' >
 		<os:private-object-store alias="referenceDataCache" persistent="false" entryTtl="8" entryTtlUnit="HOURS" expirationInterval="20" />
+	</ee:object-store-caching-strategy>
+	<ee:object-store-caching-strategy name="speechCachingStrategy" doc:name="Caching Strategy" doc:id="423c0b0a-9586-4b26-9b93-8585d46b0c3f" keyGenerationExpression="#[payload.question]" >
+		<os:private-object-store alias="speechCache" entryTtl="3" entryTtlUnit="MINUTES" />
 	</ee:object-store-caching-strategy>
 	<sub-flow name="generateFormulaOneQuestion" doc:id="a566aab7-cbb5-4db1-82d0-3610e64563de" >
 		<ee:transform doc:name="f1Results" doc:id="b5c5ceda-4a23-44b2-81f1-1d6f7753355b">
@@ -37,7 +41,7 @@ rawResults map (row) -> {
 }]]></ee:set-variable>
 				</ee:variables>
 		</ee:transform>
-		<set-variable value='#[output application/java&#10;var possibleFacts = [&#10;	"driverLastName",&#10;	"constructor", &#10;	// constructor nationality question seems confusing, removing&#10;	//"constructorNationality",&#10;	"position",&#10;]&#10;---&#10;{&#10;	fact: possibleFacts[randomInt(sizeOf(possibleFacts))],&#10;	formulaOneRecord: vars.f1Results[randomInt(sizeOf(vars.f1Results))]&#10;}]' doc:name="selectedChallenge" doc:id="b4db31f4-6817-48dd-900a-14c894b12f68" variableName="selectedChallenge"/>
+		<set-variable value='#[output application/java&#10;var possibleFacts = [&#10;	"driver",&#10;	"constructor", &#10;	// constructor nationality question seems confusing, removing&#10;	//"constructorNationality",&#10;	"position",&#10;]&#10;---&#10;{&#10;	fact: possibleFacts[randomInt(sizeOf(possibleFacts))],&#10;	formulaOneRecord: vars.f1Results[randomInt(sizeOf(vars.f1Results))]&#10;}]' doc:name="selectedChallenge" doc:id="b4db31f4-6817-48dd-900a-14c894b12f68" variableName="selectedChallenge"/>
 		<logger level="DEBUG" doc:name="DEBUG" doc:id="ddb3115a-64f1-430c-bee6-65cf1adc4034" message="#[output application/json --- vars.selectedChallenge]" category="scorekeeper-sapi.check-simple-question.generate"/>
 		<ee:transform doc:name="question and answer" doc:id="a632d6aa-01b0-4966-9a82-f5e11a560578" >
 			<ee:message >
@@ -48,9 +52,41 @@ rawResults map (row) -> {
 		</ee:transform>
 	</sub-flow>
 	<sub-flow name="checkFormulaOneQuestion" doc:id="f60d83a6-cd18-4d7c-9b1e-7269df7d6d9f" >
-		<whisperer:text-to-speech doc:name="questionSpeech" doc:id="6ab97d86-5bc4-45c1-b671-90d7a5cba10f" config-ref="MAC_Whisperer_Config" target="questionSpeech">
-			<whisperer:text ><![CDATA[#[vars.questionText]]]></whisperer:text>
+		<logger level="DEBUG" doc:name="DEBUG" doc:id="1ddb8fc6-d7d7-49d5-9794-28d9419bd2ad" message="checking question #[payload.question]" category="scorekeeper-sapi.check-simple-question.check"/>
+		<flow-ref doc:name="speakQuestion" doc:id="bdd0f01e-c954-4050-9e45-6f132665d501" name="speakQuestion" target="questionSpeech"/>
+		<http:request method="POST" doc:name="POST /voice/question/formula-one" doc:id="58d9ed00-2d6b-46a4-8679-9675a89f9044" url='#["$(payload.endpoint)/voice/question/formula-one"]' target="racerAnswer" responseTimeout="30000" requestStreamingMode="NEVER">
+			<http:body ><![CDATA[#[vars.questionSpeech]]]></http:body>
+			<http:headers ><![CDATA[#[output application/java
+---
+{
+	"Content-Type" : "audio/mp3"
+}]]]></http:headers>
+		</http:request>
+		<whisperer:speech-to-text doc:name="transcribedAnswer" doc:id="e14714d6-da4d-4c69-a3bb-36c0cb447110" config-ref="MAC_Whisperer_Config" target="transcribedAnswer">
+			<whisperer:audio-content ><![CDATA[#[vars.racerAnswer]]]></whisperer:audio-content>
+		</whisperer:speech-to-text>
+		<ee:transform doc:name="response JSON" doc:id="99779862-f445-479e-aec2-820bfd8ea546" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+import * from dw::core::Strings
+output application/json
+var expectedAnswer = lower(trim(payload.answer))
+var actualAnswer = lower(trim(vars.transcribedAnswer remove "."))
+var distance = levenshteinDistance(expectedAnswer, actualAnswer)
+---
+{
+	score: if (distance < 3) 1 else 0,
+	responseTranscription: vars.transcribedAnswer
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</sub-flow>
+	<flow name="speakQuestion" doc:id="02bea8a9-5d18-46b0-8545-32a7a56319a2" maxConcurrency="1">
+		<ee:cache doc:name="Cache" doc:id="13773438-36e7-45f9-b203-05cb39feeaec" cachingStrategy-ref="speechCachingStrategy">
+			<whisperer:text-to-speech doc:name="questionSpeech" doc:id="6ab97d86-5bc4-45c1-b671-90d7a5cba10f" config-ref="MAC_Whisperer_Config">
+			<whisperer:text><![CDATA[#[payload.question]]]></whisperer:text>
 			<whisperer:generation-options modelName="tts-1-hd" />
 		</whisperer:text-to-speech>
-	</sub-flow>
+		</ee:cache>
+	</flow>
 </mule>

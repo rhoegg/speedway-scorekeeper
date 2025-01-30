@@ -161,6 +161,8 @@ output application/json
 		<flow-ref doc:name="generateFormulaOneQuestion" doc:id="cfc1158e-cc53-4c83-a0a8-ae4e3f934513" name="generateFormulaOneQuestion" />
     </flow>
 	<flow name="post:\evaluate\simple-question:application\json:scorekeeper-system-api-config">
+		<set-variable value="#[payload.endpoint]" doc:name="endpoint" doc:id="f8002127-1892-4413-afc8-4139823bf728" variableName="endpoint"/>
 		<flow-ref doc:name="checkFormulaOneQuestion" doc:id="a6ab4f57-eec4-4cc4-ba00-a602851cfc34" name="checkFormulaOneQuestion"/>
+		<logger level="INFO" doc:name="INFO" doc:id="e191801a-15e5-4bce-9b10-7d39e8897180" category="scorekeeper-sapi.check-simple-question.check" message="Checked voice question for #[vars.endpoint]"/>
     </flow>
 </mule>

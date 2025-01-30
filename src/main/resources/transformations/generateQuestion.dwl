@@ -6,8 +6,8 @@ var season = vars.selectedChallenge.formulaOneRecord.season
 var constructor = vars.selectedChallenge.formulaOneRecord.constructor.name
 
 var question = vars.selectedChallenge.fact match {
-	case "driverLastName" -> 
-		"What is the last name of the driver who finished in position $(position) in round $(round) of $(season)?"
+	case "driver" -> 
+		"Who finished in position $(position) in round $(round) of $(season)?"
 	case "constructor" -> 
 		"Who constructed the car that finished in position $(position) in round $(round) of $(season)?"
 	case "constructorNationality" -> 
@@ -16,8 +16,8 @@ var question = vars.selectedChallenge.fact match {
 		"What position did $(position) finish in round $(round) in $(season)?"
 }
 var answer = vars.selectedChallenge.fact match {
-	case "driverLastName" -> 
-		vars.selectedChallenge.formulaOneRecord.driver.last
+	case "driver" -> 
+		vars.selectedChallenge.formulaOneRecord.driver.first ++ " " ++ vars.selectedChallenge.formulaOneRecord.driver.last
 	case "constructor" -> 
 		constructor
 	case "constructorNationality" -> 
