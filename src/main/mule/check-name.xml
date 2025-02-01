@@ -27,7 +27,7 @@ http://www.mulesoft.org/schema/mule/validation http://www.mulesoft.org/schema/mu
 			<error-mapping sourceType="HTTP:NOT_ACCEPTABLE" targetType="APP:BAD_ENDPOINT" />
 			<error-mapping sourceType="HTTP:TOO_MANY_REQUESTS" targetType="APP:ENDPOINT_DOWN" />
 		</http:request>
-		<whisperer:speech-to-text doc:name="racerNameTranscription" doc:id="d2bb8732-b410-4bd8-b84a-8cb4ed8e74fb" config-ref="MAC_Whisperer_Config" target="racerNameTranscription">
+		<whisperer:speech-to-text doc:name="racerNameTranscription" doc:id="d2bb8732-b410-4bd8-b84a-8cb4ed8e74fb" config-ref="MAC_Whisperer_Config" target="racerNameTranscription" targetValue="#[trim(payload)]">
 			<whisperer:audio-content ><![CDATA[#[vars.racerNameAudio]]]></whisperer:audio-content>
 		</whisperer:speech-to-text>
 		<choice doc:name="Choice" doc:id="c4977fb6-9f58-4cea-9931-5a89853ea248" >
@@ -48,6 +48,17 @@ output application/json
 				<flow-ref doc:name="checkRacerName_scoreImperfectMatch" doc:id="114662c8-2e1d-4e48-bd3e-05b367cf865c" name="checkRacerName_scoreImperfectMatch"/>
 			</otherwise>
 		</choice>
+		<ee:transform doc:name="Transform Message" doc:id="43cee7bf-1ecd-4420-8893-d4ba3db4ba5f" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload ++ {
+	(transcribed: vars.racerNameTranscription) if not isEmpty(vars.racerNameTranscription)
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="DEBUG" doc:name="DEBUG" doc:id="1b2ad89e-0a4b-43d3-befe-315af64b8ba0" message="#[payload]" category="scorekeeper-sapi.check-name"/>
 	</sub-flow>
 	<sub-flow name="checkRacerName_scoreImperfectMatch" doc:id="3dc86661-2418-476c-a0d0-a1647adedc12" >
 		<set-variable value="#[vars.racerNameTranscription]" doc:name="name1" doc:id="f2d2f9f2-45c6-429e-bd34-221d479b031f" variableName="name1"/>

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <mule xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:tls="http://www.mulesoft.org/schema/mule/tls" xmlns:whisperer="http://www.mulesoft.org/schema/mule/whisperer" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd  http://www.mulesoft.org/schema/mule/whisperer http://www.mulesoft.org/schema/mule/whisperer/current/mule-whisperer.xsd http://www.mulesoft.org/schema/mule/tls http://www.mulesoft.org/schema/mule/tls/current/mule-tls.xsd">
-    <apikit:config name="scorekeeper-system-api-config" api="resource::ae6d7954-6fc2-4f3e-8777-80ff8aabd859:scorekeeper-system-api:2.0.2:raml:zip:scorekeeper-system-api.raml" outboundHeadersMapName="outboundHeaders" httpStatusVarName="httpStatus" />
+    <apikit:config name="scorekeeper-system-api-config" api="resource::ae6d7954-6fc2-4f3e-8777-80ff8aabd859:scorekeeper-system-api:2.0.3:raml:zip:scorekeeper-system-api.raml" outboundHeadersMapName="outboundHeaders" httpStatusVarName="httpStatus" />
     <flow name="scorekeeper-system-api-main">
         <http:listener config-ref="httpListenerConfig" path="/api/*">
             <http:response statusCode="#[vars.httpStatus default 200]">
@@ -158,32 +158,32 @@ output application/json
         </error-handler>
     </flow>
     <flow name="get:\evaluate\simple-question:scorekeeper-system-api-config">
-		<flow-ref doc:name="generateFormulaOneQuestion" doc:id="cfc1158e-cc53-4c83-a0a8-ae4e3f934513" name="generateFormulaOneQuestion" />
+        <flow-ref doc:name="generateFormulaOneQuestion" doc:id="cfc1158e-cc53-4c83-a0a8-ae4e3f934513" name="generateFormulaOneQuestion" />
     </flow>
-	<flow name="post:\evaluate\simple-question:application\json:scorekeeper-system-api-config">
-		<set-variable value="#[payload.endpoint]" doc:name="endpoint" doc:id="f8002127-1892-4413-afc8-4139823bf728" variableName="endpoint"/>
-		<flow-ref doc:name="checkFormulaOneQuestion" doc:id="a6ab4f57-eec4-4cc4-ba00-a602851cfc34" name="checkFormulaOneQuestion"/>
-		<logger level="INFO" doc:name="INFO" doc:id="e191801a-15e5-4bce-9b10-7d39e8897180" category="scorekeeper-sapi.check-simple-question.check" message="Checked voice question for #[vars.endpoint]"/>
-		<error-handler >
-			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="7bc17c17-21be-4f48-b0f9-4867645c4505" type="APP:BAD_ENDPOINT, APP:ENDPOINT_DOWN">
-				<ee:transform doc:name="Transform Message" doc:id="17bf306d-7d35-43b5-979e-01b3920abe0c" >
-					<ee:message >
-						<ee:set-payload ><![CDATA[%dw 2.0
+    <flow name="post:\evaluate\simple-question:application\json:scorekeeper-system-api-config">
+        <set-variable value="#[payload.endpoint]" doc:name="endpoint" doc:id="f8002127-1892-4413-afc8-4139823bf728" variableName="endpoint" />
+        <flow-ref doc:name="checkFormulaOneQuestion" doc:id="a6ab4f57-eec4-4cc4-ba00-a602851cfc34" name="checkFormulaOneQuestion" />
+        <logger level="INFO" doc:name="INFO" doc:id="e191801a-15e5-4bce-9b10-7d39e8897180" category="scorekeeper-sapi.check-simple-question.check" message="Checked voice question for #[vars.endpoint]" />
+        <error-handler>
+            <on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="7bc17c17-21be-4f48-b0f9-4867645c4505" type="APP:BAD_ENDPOINT, APP:ENDPOINT_DOWN">
+                <ee:transform doc:name="Transform Message" doc:id="17bf306d-7d35-43b5-979e-01b3920abe0c">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
 output application/json
 ---
 {
 	error: "Error sending question to racer endpoint",
 	details: error.detailedDescription
 }]]></ee:set-payload>
-					</ee:message>
-					<ee:variables >
-						<ee:set-variable variableName="httpStatus" ><![CDATA[%dw 2.0
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus"><![CDATA[%dw 2.0
 output application/java
 ---
 500]]></ee:set-variable>
-					</ee:variables>
-				</ee:transform>
-			</on-error-propagate>
-		</error-handler>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+        </error-handler>
     </flow>
 </mule>
