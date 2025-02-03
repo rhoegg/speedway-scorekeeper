@@ -21,7 +21,7 @@ http://www.mulesoft.org/schema/mule/validation http://www.mulesoft.org/schema/mu
 			<error-mapping sourceType="HTTP:METHOD_NOT_ALLOWED" targetType="APP:BAD_ENDPOINT" />
 			<error-mapping sourceType="HTTP:BAD_GATEWAY" targetType="APP:ENDPOINT_DOWN" />
 			<error-mapping sourceType="HTTP:SERVICE_UNAVAILABLE" targetType="APP:ENDPOINT_DOWN" />
-			<error-mapping sourceType="HTTP:TIMEOUT" targetType="APP:ENDPOINT_DOWN" />
+			<error-mapping sourceType="HTTP:TIMEOUT" targetType="APP:ENDPOINT_TIMEOUT" />
 			<error-mapping sourceType="HTTP:INTERNAL_SERVER_ERROR" targetType="APP:ENDPOINT_DOWN" />
 			<error-mapping sourceType="HTTP:CONNECTIVITY" targetType="APP:ENDPOINT_DOWN" />
 			<error-mapping sourceType="HTTP:NOT_ACCEPTABLE" targetType="APP:BAD_ENDPOINT" />

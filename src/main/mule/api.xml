@@ -121,10 +121,27 @@ output application/json
         </error-handler>
     </flow>
     <flow name="post:\evaluate\name:application\json:scorekeeper-system-api-config">
-        <flow-ref doc:name="checkRacerName" doc:id="24d35610-45c4-4036-9412-7ff8b532e79c" name="checkRacerName" />
+        <ee:transform doc:name="Transform Message" doc:id="3e572292-e397-4d09-84e2-868f8bbd0e5c" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	error: "fake connection refused",
+	details: "for testing referee"
+}]]></ee:set-payload>
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="httpStatus" ><![CDATA[%dw 2.0
+output application/json
+---
+502]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<!-- [STUDIO:"checkRacerName"]<flow-ref doc:name="checkRacerName" doc:id="24d35610-45c4-4036-9412-7ff8b532e79c" name="checkRacerName" /> [STUDIO] -->
         <error-handler>
             <on-error-continue enableNotifications="true" logException="false" doc:name="On Error Continue" doc:id="ff2b714a-4d78-45cc-92f2-9ab72e1b4ca1" type="APP:BAD_ENDPOINT, APP:ENDPOINT_DOWN">
-                <ee:transform doc:name="HTTP response" doc:id="1f67906b-7dfd-443e-ade7-e8d76c9570be">
+                <ee:transform doc:name="502 and error response" doc:id="1f67906b-7dfd-443e-ade7-e8d76c9570be">
                     <ee:message>
                         <ee:set-payload><![CDATA[%dw 2.0
 output application/json
@@ -138,11 +155,30 @@ output application/json
                         <ee:set-variable variableName="httpStatus"><![CDATA[%dw 2.0
 output application/java
 ---
-400]]></ee:set-variable>
+502]]></ee:set-variable>
                     </ee:variables>
                 </ee:transform>
             </on-error-continue>
-            <on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="6f00a74b-f453-441b-a677-d0bff3ca4e64">
+			<on-error-continue enableNotifications="true" logException="false" doc:name="On Error Continue" doc:id="54e48a56-52a1-4dbe-9d17-d21e1114abb1" type="APP:ENDPOINT_TIMEOUT">
+				<ee:transform doc:name="504 and error response" doc:id="c2b2fcc3-a044-4cca-beff-0c24c973c964" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	error: "Request timeout for racer endpoint $(vars.endpoint default 'unknown')",
+	details: error.detailedDescription
+}]]></ee:set-payload>
+					</ee:message>
+					<ee:variables >
+						<ee:set-variable variableName="httpStatus" ><![CDATA[%dw 2.0
+output application/java
+---
+504]]></ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+			</on-error-continue>
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="6f00a74b-f453-441b-a677-d0bff3ca4e64">
                 <ee:transform doc:name="HTTP response" doc:id="5f806900-298c-4648-8dc7-737fea764824">
                     <ee:message>
                         <ee:set-payload><![CDATA[%dw 2.0
@@ -150,7 +186,7 @@ output application/json
 ---
 {
 	error: "internal error checking racer name: $(error.description)",
-	details: error
+	details: error.detailedDescription
 }]]></ee:set-payload>
                     </ee:message>
                 </ee:transform>
@@ -172,7 +208,7 @@ output application/json
 output application/json
 ---
 {
-	error: "Error sending question to racer endpoint",
+	error: "Error sending question to racer endpoint: $(error.description)",
 	details: error.detailedDescription
 }]]></ee:set-payload>
                     </ee:message>
@@ -180,10 +216,48 @@ output application/json
                         <ee:set-variable variableName="httpStatus"><![CDATA[%dw 2.0
 output application/java
 ---
-500]]></ee:set-variable>
+502]]></ee:set-variable>
                     </ee:variables>
                 </ee:transform>
             </on-error-propagate>
+			<on-error-propagate enableNotifications="true" logException="false" doc:name="On Error Propagate" doc:id="6b74726c-e994-4b55-93fd-cbac1b3b00e0" type="APP:ENDPOINT_TIMEOUT">
+				<ee:transform doc:name="Transform Message" doc:id="4a05361c-ae9e-4df7-bd03-96be89afa7ef" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	error: "Request timeout for racer endpoint $(vars.endpoint default 'unknown')",
+	details: error.detailedDescription
+}]]></ee:set-payload>
+					</ee:message>
+					<ee:variables >
+						<ee:set-variable variableName="httpStatus" ><![CDATA[%dw 2.0
+output application/java
+---
+504]]></ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+			</on-error-propagate>
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="92f6de67-a924-46ae-a020-00e1c5dc28ee" type="ANY">
+				<ee:transform doc:name="Transform Message" doc:id="95509d15-47e8-457a-8a9a-04550cd8c2ed" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	error: error.description,
+	details: error.detailedDescription
+}]]></ee:set-payload>
+					</ee:message>
+					<ee:variables >
+						<ee:set-variable variableName="httpStatus" ><![CDATA[%dw 2.0
+output application/java
+---
+504]]></ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+			</on-error-propagate>
         </error-handler>
     </flow>
 </mule>

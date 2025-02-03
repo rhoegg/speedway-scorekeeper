@@ -64,7 +64,7 @@ rawResults map (row) -> {
 			<error-mapping sourceType="HTTP:NOT_ACCEPTABLE" targetType="APP:BAD_ENDPOINT" />
 			<error-mapping sourceType="HTTP:NOT_FOUND" targetType="APP:BAD_ENDPOINT" />
 			<error-mapping sourceType="HTTP:SERVICE_UNAVAILABLE" targetType="APP:BAD_ENDPOINT" />
-			<error-mapping sourceType="HTTP:TIMEOUT" targetType="APP:ENDPOINT_DOWN" />
+			<error-mapping sourceType="HTTP:TIMEOUT" targetType="APP:ENDPOINT_TIMEOUT" />
 			<error-mapping sourceType="HTTP:TOO_MANY_REQUESTS" targetType="APP:ENDPOINT_DOWN" />
 			<error-mapping sourceType="HTTP:UNAUTHORIZED" targetType="APP:BAD_ENDPOINT" />
 			<error-mapping sourceType="HTTP:UNSUPPORTED_MEDIA_TYPE" targetType="APP:BAD_ENDPOINT" />
