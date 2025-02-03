@@ -28,6 +28,7 @@ http://www.mulesoft.org/schema/mule/validation http://www.mulesoft.org/schema/mu
 			<error-mapping sourceType="HTTP:NOT_ACCEPTABLE" targetType="APP:BAD_ENDPOINT" />
 			<error-mapping sourceType="HTTP:TOO_MANY_REQUESTS" targetType="APP:ENDPOINT_DOWN" />
 		</http:request>
+		<logger level="DEBUG" doc:name="DEBUG" doc:id="179f1870-183a-4676-9f66-e692d4cf285c" category="scorekeeper-sapi.check-name" message="Checked name completed with #[vars.endpoint]"/>
 		<whisperer:speech-to-text doc:name="racerNameTranscription" doc:id="d2bb8732-b410-4bd8-b84a-8cb4ed8e74fb" config-ref="MAC_Whisperer_Config" target="racerNameTranscription" targetValue="#[trim(payload)]">
 			<whisperer:audio-content ><![CDATA[#[vars.racerNameAudio]]]></whisperer:audio-content>
 		</whisperer:speech-to-text>
