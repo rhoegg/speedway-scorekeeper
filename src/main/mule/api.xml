@@ -166,8 +166,8 @@ output application/java
 output application/json
 ---
 {
-	error: "Request timeout for racer endpoint $(vars.endpoint default 'unknown')",
-	details: error.detailedDescription
+	error: "Request timeout for racer endpoint",
+	details:  "Request timed out after $(vars.timeOut / 1000) seconds\n$(error.detailedDescription)"
 }]]></ee:set-payload>
                     </ee:message>
                     <ee:variables>

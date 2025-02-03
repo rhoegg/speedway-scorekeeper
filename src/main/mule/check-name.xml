@@ -13,7 +13,8 @@ http://www.mulesoft.org/schema/mule/ms-aichain http://www.mulesoft.org/schema/mu
 http://www.mulesoft.org/schema/mule/validation http://www.mulesoft.org/schema/mule/validation/current/mule-validation.xsd">
 	<sub-flow name="checkRacerName" doc:id="0c6e6d88-24bd-4cd6-9f05-0509884248b0" >
 	<set-variable value="#[payload.endpoint]" doc:name="endpoint" doc:id="395af07a-d03c-4034-ba00-fb6d65ec8a6b" variableName="endpoint"/>
-		<http:request method="GET" doc:name="endpoint GET /name" doc:id="42edd387-0f28-4f28-b90d-074e34f8acd2" url='#["$(vars.endpoint)/voice/name"]' target="racerNameAudio" responseTimeout="#[payload.timeout * 1000]">
+		<set-variable value="#[payload.timeout * 1000]" doc:name="timeOut" doc:id="2874c597-eefa-4630-9fb0-c8450aa19953" variableName="timeOut" />
+		<http:request method="GET" doc:name="endpoint GET /name" doc:id="42edd387-0f28-4f28-b90d-074e34f8acd2" url='#["$(vars.endpoint)/voice/name"]' target="racerNameAudio" responseTimeout="#[vars.timeOut]">
 			<error-mapping sourceType="HTTP:BAD_REQUEST" targetType="APP:BAD_ENDPOINT" />
 			<error-mapping sourceType="HTTP:UNAUTHORIZED" targetType="APP:BAD_ENDPOINT" />
 			<error-mapping sourceType="HTTP:NOT_FOUND" targetType="APP:BAD_ENDPOINT" />
