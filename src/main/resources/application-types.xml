@@ -463,4 +463,5 @@ properties:
       </types:output-event>
     </types:processor-declaration>
   </types:enrichment>
+  <types:enrichment select="#43cee7bf-1ecd-4420-8893-d4ba3db4ba5f"/>
 </types:mule>

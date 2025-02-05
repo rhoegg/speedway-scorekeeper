@@ -86,12 +86,6 @@
 			<classifier>mule-plugin</classifier>
 		</dependency>
 		<dependency>
-			<groupId>io.github.mulesoft-ai-chain-project</groupId>
-			<artifactId>mule4-aichain-connector</artifactId>
-			<version>1.2.0</version>
-			<classifier>mule-plugin</classifier>
-		</dependency>
-		<dependency>
 			<groupId>org.mule.connectors</groupId>
 			<artifactId>mule-http-connector</artifactId>
 			<version>1.10.3</version>
@@ -153,6 +147,13 @@
 			<version>2.0.5</version>
 			<classifier>raml</classifier>
 			<type>zip</type>
+		</dependency>
+		<dependency>
+			<groupId>ae6d7954-6fc2-4f3e-8777-80ff8aabd859</groupId>
+			<artifactId>speedway-domain</artifactId>
+			<version>1.0.0</version>
+			<classifier>mule-domain</classifier>
+			<scope>provided</scope>
 		</dependency>
 	</dependencies>
 	<repositories>

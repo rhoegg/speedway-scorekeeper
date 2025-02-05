@@ -13,15 +13,11 @@ http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/fil
 http://www.mulesoft.org/schema/mule/ms-aichain http://www.mulesoft.org/schema/mule/ms-aichain/current/mule-ms-aichain.xsd">
 	<global-property doc:name="Global Property" doc:id="fc417433-ad0c-4525-86e3-02f602a33f7a" name="mule.env" value="local" />
 	<configuration-properties doc:name="Configuration properties" doc:id="c82bc038-3f43-4b21-b721-eed741c7e9d4" file="config/${mule.env}.yaml" />
-    <http:listener-config name="httpListenerConfig">
-        <http:listener-connection host="0.0.0.0" port="${http.port}" />
-    </http:listener-config>
 	<racer-api:config name="racerApiConfig" doc:name="Racer API Config" doc:id="86405d40-1002-4238-aa06-d7b64a6074dc" property_host="example" property_port="443" property_protocol="HTTPS" />
 	<api-gateway:autodiscovery apiId="${anypoint.api.id}" ignoreBasePath="true" doc:name="API Autodiscovery" doc:id="02a37809-e5d2-4d5c-b756-899d6ecc992c" flowRef="scorekeeper-system-api-main" />
 	<whisperer:config name="MAC_Whisperer_Config" doc:name="MAC Whisperer Config" doc:id="8b7006a8-ae09-4041-b7a5-b9861ef94c54" >
 		<whisperer:open-ai-connection apiKey="${openai.apikey}" />
 	</whisperer:config>
-	<ms-aichain:config name="MuleSoft_AI_Chain_Config" llmType="OPENAI" configType="Environment Variables" modelName="gpt-4o" doc:name="MuleSoft AI Chain Config" doc:id="e219617b-c530-49ed-90bf-4219e567644a" filePath="-"/>
 	<global-property doc:name="Global Property" doc:id="18beaf80-1249-4cf0-b38c-c0a44b9e3c1a" name="openai.apikey" value="${OPENAI_API_KEY}" />
 	<flow name="sandboxFlow1" doc:id="b149a976-7df9-4caa-9f61-ead5cc7cee31" >
 		<set-variable value="sage" doc:name="voice" doc:id="1759e19f-337b-4cff-8bfa-977e67f05e48" variableName="voice"/>
