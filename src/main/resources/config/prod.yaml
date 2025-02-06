@@ -1,9 +1,6 @@
-http:
-  port: "8081"
-  
 anypoint:
   api:
-    id: "20188721"
+    id: "1"
   
 racer:
   timeout: "7200000" # milliseconds

@@ -1,6 +1,3 @@
-http:
-  port: "8094"
-  
 anypoint:
   api:
     id: "1"
