@@ -1,0 +1,223 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ms-aichain="http://www.mulesoft.org/schema/mule/ms-aichain"
+	xmlns:validation="http://www.mulesoft.org/schema/mule/validation"
+	xmlns:azure-key-vault="http://www.mulesoft.org/schema/mule/azure-key-vault" xmlns:ms-vectors="http://www.mulesoft.org/schema/mule/ms-vectors"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd 
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/ms-vectors http://www.mulesoft.org/schema/mule/ms-vectors/current/mule-ms-vectors.xsd
+http://www.mulesoft.org/schema/mule/azure-key-vault http://www.mulesoft.org/schema/mule/azure-key-vault/current/mule-azure-key-vault.xsd
+http://www.mulesoft.org/schema/mule/validation http://www.mulesoft.org/schema/mule/validation/current/mule-validation.xsd
+http://www.mulesoft.org/schema/mule/ms-aichain http://www.mulesoft.org/schema/mule/ms-aichain/current/mule-ms-aichain.xsd">
+	<sub-flow name="getRandomArticle" doc:id="bba01a5b-8461-4d7c-85c0-db10c17fdb50">
+		<ee:transform doc:name="Transform Message" doc:id="00159d49-c031-4b75-87a7-08f7c8210886">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/java
+var articles = readUrl("classpath://data/formulaone-articles.json", "application/json")
+---
+articles[randomInt(sizeOf(articles))]]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<http:request method="POST" doc:name="get" doc:id="70c303f7-9649-48e7-a691-102bf6460587" config-ref="zillizHttpRequestConfig" path="/entities/get">
+			<http:body><![CDATA[#[output application/json
+---
+{
+	collectionName: "formula_one_articles",
+	id: payload.id,
+	outputFields: ["metadata", "vector"]
+}]]]></http:body>
+		</http:request>
+		<ee:transform doc:name="parse metadata" doc:id="49a922ea-6b49-4110-b811-90f95b26db8c">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/java
+---
+payload.data[0] update {
+	case m at .metadata -> read(m, "application/json")
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</sub-flow>
+	<sub-flow name="rebuildFullArticle" doc:id="ab419ffb-ea48-42de-8e59-f697351a37f2">
+		<logger level="INFO" doc:name="Logger" doc:id="9f98e8fb-a696-42e0-bdba-f8b9f0374d11" message="Rebuilding #[payload.metadata.title]" />
+		<http:request method="POST" doc:name="query" doc:id="fb26ae4b-2c31-4bfc-b1bb-299141c2c2ad" config-ref="zillizHttpRequestConfig" path="/entities/query">
+			<http:body><![CDATA[#[output application/json
+---
+{
+	collectionName: "formula_one_articles",
+	filter: 'metadata["source_id"] == "$(payload.metadata.source_id)"',
+	outputFields: ["text", "metadata"]
+}]]]></http:body>
+		</http:request>
+		<ee:transform doc:name="Transform Message" doc:id="2758e363-d9f4-4404-bb51-3de1f598a48c">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output text/plain
+var results = payload.data map (result) -> result update {
+	case m at .metadata -> read(m, "application/json")
+}
+var segments = (results orderBy ($.metadata.index as Number)) map (result) -> result.text
+---
+segments joinBy " "]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</sub-flow>
+	<sub-flow name="getBaseArticle" doc:id="4c43582b-082e-421d-afbb-41c61a5f222b" >
+		<try doc:name="Try" doc:id="5c470802-fe57-486d-9d50-906df0f7819a">
+			<foreach doc:name="For Each" doc:id="864bc391-acb4-4f93-8c62-c36b5b6f0961" collection="#[(1 to 30)]">
+			<flow-ref doc:name="getRandomArticle" doc:id="bc3733f7-f1a1-43b1-8d98-b0ee4bed1888" name="getRandomArticle" />
+			<flow-ref doc:name="rebuildFullArticle" doc:id="91234ea0-32cc-42e7-9975-b54bd7379034" name="rebuildFullArticle" target="candidateArticle"/>
+			<ms-aichain:chat-answer-prompt doc:name="identify f1 article" doc:id="414eda29-bd54-492b-b9fc-38ac2a2c02d8" config-ref="domainOpenAIMacConfig" target="llmResponse">
+					<ms-aichain:prompt><![CDATA[#[var prompt = readUrl("classpath://prompts/identify-commentary-f1-article.txt", "text/plain")
+var article = read(vars.candidateArticle, "application/json")
+---
+prompt ++ "\n\n" ++ article.content]]]></ms-aichain:prompt>
+				</ms-aichain:chat-answer-prompt>
+			<set-variable value="#[payload]" doc:name="articleMeta" doc:id="86ee46c8-b3bc-42b2-9aaf-af475c8e6ba7" variableName="articleMeta"/>
+				<logger level="INFO" doc:name="Logger" doc:id="49b3485f-0939-46e5-ad2d-a6c456ced431" message="Checking article with LLM: #[vars.llmResponse.response]"/>
+				<validation:is-false doc:name="validate llm response" doc:id="b06f3a8e-16b2-4b98-8383-ce9e1842dc99" expression='#[lower(vars.llmResponse.response) == "true"]' doc:description="if the LLM response is true, we want to raise an error here to break out of the for each loop.">
+					<error-mapping sourceType="VALIDATION:INVALID_BOOLEAN" targetType="APP:BREAK_LOOP" />
+				</validation:is-false>
+				<logger level="INFO" doc:name="Logger" doc:id="01c14eaa-c98b-4337-bb3f-9c0ee8a3a54e" message="Article was not F1 commentary"/>
+		</foreach>
+			<raise-error doc:name="APP:ARTICLE_RETRY_EXHAUSTED" doc:id="60f5f85a-f710-43b5-b577-5f327789c6d2" type="APP:ARTICLE_RETRY_EXHAUSTED" description="Out of retries finding suitable article"/>
+			<error-handler >
+				<on-error-continue enableNotifications="true" logException="false" doc:name="On Error Continue" doc:id="70dd3067-491d-4d30-a1e0-7cfd25b495b9" type="APP:BREAK_LOOP">
+					<ee:transform doc:name="Transform Message" doc:id="af8401a8-6311-4b17-acc2-8d8a16b20f40" >
+						<ee:message >
+							<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+read(vars.candidateArticle, "application/json")]]></ee:set-payload>
+						</ee:message>
+					</ee:transform>
+					<flow-ref doc:name="cleanScrapedArticle" doc:id="a7a93342-2c87-45cd-9acd-ddff256f54d8" name="cleanScrapedArticle"/>
+					<ee:transform doc:name="Transform Message" doc:id="e0d281eb-0865-4cbc-80a4-9dd40167777f" >
+						<ee:message >
+							<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	article: vars.articleMeta,
+	fullText: payload
+}
+]]></ee:set-payload>
+						</ee:message>
+					</ee:transform>
+				</on-error-continue>
+			</error-handler>
+		</try>
+	</sub-flow>
+	<sub-flow name="cleanScrapedArticle" doc:id="2fdeb8d5-e4e7-46cb-a14f-1bda80c50986" >
+		<ms-aichain:chat-answer-prompt doc:name="Chat answer prompt" doc:id="881f5b70-64fb-4bbb-9718-1786a4d0d483" config-ref="domainOpenAIMacConfig" target="llmResponse">
+			<ms-aichain:prompt ><![CDATA[#[readUrl("classpath://prompts/clean-scraped-article.txt", "text/plain")
+++ "\n"
+++ write(payload, "application/json")]]]></ms-aichain:prompt>
+		</ms-aichain:chat-answer-prompt>
+		<ee:transform doc:name="Transform Message" doc:id="ae6ce92c-49f6-4279-bd59-bac4c4310f4e" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload ++ {
+	cleaned: vars.llmResponse.response
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</sub-flow>
+	<sub-flow name="fetchSimilarArticles" doc:id="2b5e49c9-7ac5-42b2-a53e-3814a23924bc" >
+		<ms-vectors:query doc:name="[Store] Query" doc:id="b9964dae-35f5-45c0-a5a4-ef68c382243c" config-ref="MuleSoft_Vectors_Connector_Store_config" storeName="formula_one_articles" maxResults="24" minScore="0.8" metadataKey="url" filterMethod="isNotEqualTo" metadataValue="#[payload.article.metadata.url]">
+			<ms-vectors:text-segment-and-embedding><![CDATA[#[output text/plain --- write({
+	embeddings: [payload.article.vector],
+	'text-segments': [{metadata: {}, text: "x"}],
+	dimension: 1536
+}, "application/json")]]]></ms-vectors:text-segment-and-embedding>
+		</ms-vectors:query>
+		<ee:transform doc:name="Transform Message" doc:id="469d7517-8c73-4b88-bbee-75e66edf99ab" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+import take from dw::core::Arrays
+output application/json
+var threeSimilar = (payload.sources distinctBy $.metadata.url) take 3
+---
+threeSimilar]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<parallel-foreach doc:name="Parallel For Each" doc:id="99319746-0038-4434-8be1-59bfc46f526d">
+			<flow-ref doc:name="rebuildFullArticle" doc:id="258a68f6-e426-4914-a989-f355bdb39df6" name="rebuildFullArticle"/>
+			<ee:transform doc:name="Transform Message" doc:id="e1267043-c5dd-4887-bb7d-3c7e37957e4a">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+read(payload, "application/json")]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+			<flow-ref doc:name="cleanScrapedArticle" doc:id="a6d85a0b-b467-4a77-830c-b493014faa9a" name="cleanScrapedArticle"/>
+		</parallel-foreach>
+	</sub-flow>
+	<sub-flow name="generateBiasedArticle" doc:id="29975eee-082b-4986-bc76-f7dce1dac87e">
+		<set-variable value='#[["in favor of", "against"][randomInt(2)]]' doc:name="bias" doc:id="2d20ea36-9c58-4432-9585-8166f0b5ae70" variableName="bias"/>
+		<set-variable value="#[[&quot;listens to classic rock&quot;, &quot;eats reese's pieces&quot;, &quot;watches anime on weekends&quot;, &quot;has a pet tortoise&quot;][randomInt(4)]]" doc:name="biasReason" doc:id="b492ff39-7cf2-4cd0-9eb5-e3aa34bcf3df" variableName="biasReason"/>
+		<parse-template doc:name="generate-biased-article.txt" doc:id="22f12af4-9ea2-46b3-8420-63cf7304c28a" location="prompts/generate-biased-article.txt" target="prompt"/>
+		<ms-aichain:chat-answer-prompt doc:name="Chat answer prompt" doc:id="461e20c2-5db2-4f1b-8a81-883c6d5e4bcc" config-ref="domainOpenAIMacConfig">
+					<ms-aichain:prompt><![CDATA[#[vars.prompt ++ "\n" ++ write(payload.similar, "application/json")]]]></ms-aichain:prompt>
+				</ms-aichain:chat-answer-prompt>
+	</sub-flow>
+	<flow name="generateChallengeArticles" doc:id="2d37881a-f492-41f3-837e-7276b6b9e9cb" >
+		<azure-key-vault:get-secret doc:name="milvusToken" doc:id="91a65dac-6472-4ec6-ac46-7287f9f663c2" config-ref="Azure_Key_Vault_Config" name="milvus-token" target="milvusToken" targetValue="#[payload.value]"/>
+		<flow-ref doc:name="getBaseArticle" doc:id="de338898-829c-4796-b778-c65fe1c21f00" name="getBaseArticle" />
+		<flow-ref doc:name="fetchSimilarArticles" doc:id="8762821a-84d3-4e15-963f-060d82b37b96" name="fetchSimilarArticles" target="similar"/>
+		<ee:transform doc:name="Transform Message" doc:id="8fda47c0-a68c-4e9a-94e2-574bdbebfc44" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+var similar = vars.similar map $.payload
+---
+{
+	base: payload.fullText,
+	similar: similar map ($ - "content")
+}
+]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<scatter-gather doc:name="Scatter-Gather" doc:id="a94fdee7-8f00-42d7-9b3e-40e90ca0f02b" target="newArticles">
+			<route >
+				<ms-aichain:chat-answer-prompt doc:name="generate normal article" doc:id="1a1a9303-9b8c-45ec-a77f-22ff05dfa9dc" config-ref="domainOpenAIMacConfig">
+					<ms-aichain:prompt ><![CDATA[#[readUrl("classpath://prompts/generate-new-article.txt", "text/plain") ++ "\n" ++ write(payload.similar, "application/json")]]]></ms-aichain:prompt>
+				</ms-aichain:chat-answer-prompt>
+			</route>
+			<route>
+				<flow-ref doc:name="generateBiasedArticle" doc:id="48eb49a0-f280-4a1a-91b9-978cc7174a99" name="generateBiasedArticle" />
+			</route>
+		</scatter-gather>
+		<ee:transform doc:name="Transform Message" doc:id="10482d7c-812d-48ba-b1ec-c1c527763836" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+import substring from dw::core::Strings
+output application/json
+
+fun readLlmArticle(llmText) = do {
+	var jsonStart = llmText indexOf '{'
+	var jsonEnd = llmText lastIndexOf '}'
+	---
+	read(substring(llmText, jsonStart, jsonEnd + 1), "application/json")
+}
+
+var llmArticle1 = readLlmArticle(vars.newArticles.'0'.payload.response)
+var llmArticle2 = readLlmArticle(vars.newArticles.'1'.payload.response)
+---
+payload ++ {
+	new: [
+		{normal: llmArticle1},
+		{biased: llmArticle2}
+	]
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="Logger" doc:id="73577b7e-a002-4704-b7fa-2dfab04efc0b" message="#[output application/json --- payload]" />
+	</flow>
+</mule>

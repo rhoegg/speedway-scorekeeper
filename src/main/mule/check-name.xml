@@ -1,16 +1,20 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<mule xmlns:validation="http://www.mulesoft.org/schema/mule/validation"
-	xmlns:ms-aichain="http://www.mulesoft.org/schema/mule/ms-aichain" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
-	xmlns:whisperer="http://www.mulesoft.org/schema/mule/whisperer"
-	xmlns:file="http://www.mulesoft.org/schema/mule/file" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:racer-api="http://www.mulesoft.org/schema/mule/racer-api" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
+<mule xmlns:os="http://www.mulesoft.org/schema/mule/os"
+	xmlns:validation="http://www.mulesoft.org/schema/mule/validation" xmlns:ms-aichain="http://www.mulesoft.org/schema/mule/ms-aichain"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:whisperer="http://www.mulesoft.org/schema/mule/whisperer" xmlns:file="http://www.mulesoft.org/schema/mule/file" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:racer-api="http://www.mulesoft.org/schema/mule/racer-api" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
 http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
 http://www.mulesoft.org/schema/mule/racer-api http://www.mulesoft.org/schema/mule/racer-api/current/mule-racer-api.xsd
 http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/file/current/mule-file.xsd
 http://www.mulesoft.org/schema/mule/whisperer http://www.mulesoft.org/schema/mule/whisperer/current/mule-whisperer.xsd
 http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
 http://www.mulesoft.org/schema/mule/ms-aichain http://www.mulesoft.org/schema/mule/ms-aichain/current/mule-ms-aichain.xsd
-http://www.mulesoft.org/schema/mule/validation http://www.mulesoft.org/schema/mule/validation/current/mule-validation.xsd">
+http://www.mulesoft.org/schema/mule/validation http://www.mulesoft.org/schema/mule/validation/current/mule-validation.xsd
+http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/current/mule-os.xsd">
+	<ee:object-store-caching-strategy name="llmPromptCacheStrategy" doc:name="Caching Strategy" doc:id="717d2b3f-606a-4661-ad35-9c958f8de953" keyGenerationExpression="#[vars.prompt]" >
+		<os:private-object-store alias="llmPromptCacheStore" entryTtl="300" expirationInterval="100" expirationIntervalUnit="SECONDS" />
+	</ee:object-store-caching-strategy>
 	<sub-flow name="checkRacerName" doc:id="0c6e6d88-24bd-4cd6-9f05-0509884248b0" >
 	<set-variable value="#[payload.endpoint]" doc:name="endpoint" doc:id="395af07a-d03c-4034-ba00-fb6d65ec8a6b" variableName="endpoint"/>
 		<set-variable value="#[payload.timeout * 1000]" doc:name="timeOut" doc:id="2874c597-eefa-4630-9fb0-c8450aa19953" variableName="timeOut" />
@@ -33,7 +37,7 @@ http://www.mulesoft.org/schema/mule/validation http://www.mulesoft.org/schema/mu
 			<whisperer:audio-content ><![CDATA[#[vars.racerNameAudio]]]></whisperer:audio-content>
 		</whisperer:speech-to-text>
 		<choice doc:name="Choice" doc:id="c4977fb6-9f58-4cea-9931-5a89853ea248" >
-			<when expression="#[trim(lower(vars.racerNameTranscription)) == trim(lower(payload.name))]">
+			<when expression="#[dw::app::Transforms::clean(vars.racerNameTranscription) == dw::app::Transforms::clean(payload.name)]">
 				<ee:transform doc:name="perfect 10" doc:id="0420a818-7125-43eb-9eef-feb43f96d997" >
 					<ee:message >
 						<ee:set-payload ><![CDATA[%dw 2.0
@@ -64,19 +68,19 @@ payload ++ {
 		</ee:transform>
 		<logger level="DEBUG" doc:name="DEBUG" doc:id="1b2ad89e-0a4b-43d3-befe-315af64b8ba0" message="#[payload]" category="scorekeeper-sapi.check-name"/>
 	</sub-flow>
-	<sub-flow name="checkRacerName_scoreImperfectMatch" doc:id="3dc86661-2418-476c-a0d0-a1647adedc12" >
-		<set-variable value="#[vars.racerNameTranscription]" doc:name="name1" doc:id="f2d2f9f2-45c6-429e-bd34-221d479b031f" variableName="name1"/>
-		<set-variable value="#[payload.name]" doc:name="name2" doc:id="e93e8580-d6d7-4b6d-a3f3-dd21fa3f1781" variableName="name2"/>
-		<parse-template doc:name="similarity prompt" doc:id="1a0319b3-a5a4-4e13-94e5-7601cb8bd253" location="prompts/compare-transcription.txt" target="prompt"/>
-		<ms-aichain:chat-answer-prompt doc:name="Chat answer prompt" doc:id="4ca28a03-80df-4e43-be73-b500276d4bd1" config-ref="domainOpenAIMacConfig" target="llmOutput">
-			<ms-aichain:prompt ><![CDATA[#[vars.prompt]]]></ms-aichain:prompt>
-		</ms-aichain:chat-answer-prompt>
+	<sub-flow name="checkRacerName_scoreImperfectMatch" doc:id="3dc86661-2418-476c-a0d0-a1647adedc12">
+		<set-variable value="#[dw::app::Transforms::clean(vars.racerNameTranscription)]" doc:name="name1" doc:id="f2d2f9f2-45c6-429e-bd34-221d479b031f" variableName="name1" />
+		<set-variable value="#[output text/plain --- dw::app::Transforms::clean(payload.name)]" doc:name="name2" doc:id="e93e8580-d6d7-4b6d-a3f3-dd21fa3f1781" variableName="name2" />
+		<parse-template doc:name="similarity prompt" doc:id="1a0319b3-a5a4-4e13-94e5-7601cb8bd253" location="prompts/compare-transcription.txt" target="prompt" />
+		<logger level="DEBUG" doc:name="DEBUG" doc:id="ba121ad2-964b-4158-b1ef-a5d8824ce2af" message="Scoring the racer name using LLM prompt: #[vars.prompt]" category="scorekeeper-sapi.check-name.llm" />
+		<flow-ref doc:name="llmPrompt" doc:id="7e68f7d0-e0a5-44b7-8ca3-b90599c0067b" name="llmPrompt" target="llmOutput"/>
+		<logger level="WARN" doc:name="Logger" doc:id="c35d7536-3ddb-439f-9c70-edbffd20fa31" message="#[output application/json --- { vars: vars, payload: payload }]" />
 		<validation:is-number numberType="FLOAT" doc:name="number between 0 and 10" doc:id="7e395334-08f5-4885-881d-c0ee780e937e" value="#[vars.llmOutput.response]" minValue="0" maxValue="10">
 			<error-mapping sourceType="VALIDATION:INVALID_NUMBER" targetType="APP:LLM_FAILURE" />
 		</validation:is-number>
-		<ee:transform doc:name="score" doc:id="9cc366cc-f5c3-4b3b-bbe8-966e421457c7" >
-			<ee:message >
-				<ee:set-payload ><![CDATA[%dw 2.0
+		<ee:transform doc:name="score" doc:id="9cc366cc-f5c3-4b3b-bbe8-966e421457c7">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
 output application/json
 ---
 {
@@ -84,5 +88,13 @@ output application/json
 }]]></ee:set-payload>
 			</ee:message>
 		</ee:transform>
+	</sub-flow>
+	<sub-flow name="llmPrompt" doc:id="b5c884db-8cc8-4877-a1e0-ad9c80124003">
+		<ee:cache doc:name="Cache" doc:id="bbe2ac85-8fab-4e5f-b56b-24fb573d155f" cachingStrategy-ref="llmPromptCacheStrategy">
+			<ms-aichain:chat-answer-prompt doc:name="Chat answer prompt" doc:id="4ca28a03-80df-4e43-be73-b500276d4bd1" config-ref="domainOpenAIMacConfig">
+			<ms-aichain:prompt><![CDATA[#[vars.prompt]]]></ms-aichain:prompt>
+		</ms-aichain:chat-answer-prompt>
+			<logger level="DEBUG" doc:name="DEBUG" doc:id="2d219181-b67a-4e78-a5a2-e31da96a8dee" category="scorekeeper-sapi.check-name.llm" message="Got LLM response #[output application/json --- payload]" />
+		</ee:cache>
 	</sub-flow>
 </mule>

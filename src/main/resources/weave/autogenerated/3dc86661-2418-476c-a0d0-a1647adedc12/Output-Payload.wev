@@ -1,7 +1,0 @@
-%dw 2.0
-
-type auto_3dc86661_2418_476c_a0d0_a1647adedc12_Output_Payload = {
-  score: Number, 
-  _?: Any
-}
-

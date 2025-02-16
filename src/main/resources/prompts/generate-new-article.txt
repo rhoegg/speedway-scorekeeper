@@ -1,0 +1,1 @@
+Given these sample articles, generate a realistic article about the same topic.  Your response should be just the article, in the same JSON format as the samples.

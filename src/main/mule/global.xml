@@ -1,16 +1,19 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<mule xmlns:ms-aichain="http://www.mulesoft.org/schema/mule/ms-aichain"
-	xmlns:file="http://www.mulesoft.org/schema/mule/file" xmlns:whisperer="http://www.mulesoft.org/schema/mule/whisperer"
-	xmlns:s3="http://www.mulesoft.org/schema/mule/s3"
-	xmlns:api-gateway="http://www.mulesoft.org/schema/mule/api-gateway" xmlns:racer-api="http://www.mulesoft.org/schema/mule/racer-api" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
+<mule xmlns:azure-key-vault="http://www.mulesoft.org/schema/mule/azure-key-vault"
+	xmlns:ms-vectors="http://www.mulesoft.org/schema/mule/ms-vectors" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:ms-aichain="http://www.mulesoft.org/schema/mule/ms-aichain"
+	xmlns:file="http://www.mulesoft.org/schema/mule/file" xmlns:whisperer="http://www.mulesoft.org/schema/mule/whisperer" xmlns:s3="http://www.mulesoft.org/schema/mule/s3" xmlns:api-gateway="http://www.mulesoft.org/schema/mule/api-gateway" xmlns:racer-api="http://www.mulesoft.org/schema/mule/racer-api" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
 http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
 http://www.mulesoft.org/schema/mule/racer-api http://www.mulesoft.org/schema/mule/racer-api/current/mule-racer-api.xsd
 http://www.mulesoft.org/schema/mule/api-gateway http://www.mulesoft.org/schema/mule/api-gateway/current/mule-api-gateway.xsd
 http://www.mulesoft.org/schema/mule/s3 http://www.mulesoft.org/schema/mule/s3/current/mule-s3.xsd
 http://www.mulesoft.org/schema/mule/whisperer http://www.mulesoft.org/schema/mule/whisperer/current/mule-whisperer.xsd
 http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/file/current/mule-file.xsd
-http://www.mulesoft.org/schema/mule/ms-aichain http://www.mulesoft.org/schema/mule/ms-aichain/current/mule-ms-aichain.xsd">
+http://www.mulesoft.org/schema/mule/ms-aichain http://www.mulesoft.org/schema/mule/ms-aichain/current/mule-ms-aichain.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/ms-vectors http://www.mulesoft.org/schema/mule/ms-vectors/current/mule-ms-vectors.xsd
+http://www.mulesoft.org/schema/mule/azure-key-vault http://www.mulesoft.org/schema/mule/azure-key-vault/current/mule-azure-key-vault.xsd">
 	<global-property doc:name="Global Property" doc:id="fc417433-ad0c-4525-86e3-02f602a33f7a" name="mule.env" value="local" />
 	<configuration-properties doc:name="Configuration properties" doc:id="c82bc038-3f43-4b21-b721-eed741c7e9d4" file="config/${mule.env}.yaml" />
 	<racer-api:config name="racerApiConfig" doc:name="Racer API Config" doc:id="86405d40-1002-4238-aa06-d7b64a6074dc" property_host="example" property_port="443" property_protocol="HTTPS" />
@@ -19,13 +22,14 @@ http://www.mulesoft.org/schema/mule/ms-aichain http://www.mulesoft.org/schema/mu
 		<whisperer:open-ai-connection apiKey="${openai.apikey}" />
 	</whisperer:config>
 	<global-property doc:name="Global Property" doc:id="18beaf80-1249-4cf0-b38c-c0a44b9e3c1a" name="openai.apikey" value="${OPENAI_API_KEY}" />
-	<flow name="sandboxFlow1" doc:id="b149a976-7df9-4caa-9f61-ead5cc7cee31" >
-		<set-variable value="sage" doc:name="voice" doc:id="1759e19f-337b-4cff-8bfa-977e67f05e48" variableName="voice"/>
-		<set-payload value='What nationality is the team that finished in position 4 in 2014 round 6?' doc:name="Set Payload" doc:id="d6d5088f-257a-497a-90bb-a17b6ee6b21c" />
-		<whisperer:text-to-speech doc:name="Text to Speech" doc:id="d25ffff7-40fa-4880-84e9-42fcbc828f42" config-ref="MAC_Whisperer_Config">
-			<whisperer:generation-options modelName="tts-1-hd" voice="#[vars.voice]"/>
-		</whisperer:text-to-speech>
-		<file:write doc:name="Write" doc:id="b4713a79-334f-4c35-8851-b93a1cc142b8" path='#["/Users/rhoegg/Desktop/f1-example-1-$(vars.voice).mp3"]'/>
-		<logger level="INFO" doc:name="Logger" doc:id="f0b0577d-3a4d-4b72-a5ac-ab0768f61a3e" message="done"/>
-	</flow>
+	<ms-vectors:store-config name="MuleSoft_Vectors_Connector_Store_config" doc:name="MuleSoft Vectors Connector Store config" doc:id="3e057a65-268f-4f91-bed8-75260f79e0d8" >
+		<ms-vectors:milvus-connection url="https://${milvus.host}" token="${milvus.token}"/>
+	</ms-vectors:store-config>
+	<http:request-config name="zillizHttpRequestConfig" doc:name="HTTP Request configuration" doc:id="14beaa00-5cf3-4e13-bb27-7d37f445b11a" basePath="/v2/vectordb">
+		<http:request-connection protocol="HTTPS" host="${milvus.host}" port="443"/>
+		<http:default-headers >
+			<http:default-header key="Authorization" value='Bearer ${milvus.token}' />
+		</http:default-headers>
+	</http:request-config>
+
 </mule>

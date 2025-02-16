@@ -9,9 +9,10 @@
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-		<app.runtime>4.8.1</app.runtime>
+		<app.runtime>4.8.4</app.runtime>
 		<mule.maven.plugin.version>4.3.0</mule.maven.plugin.version>
 		<munit.version>3.3.0</munit.version>
+		<langchain4jVersion>0.35.0</langchain4jVersion>
 	</properties>
 	<build>
 		<plugins>
@@ -27,6 +28,24 @@
 				<extensions>true</extensions>
 				<configuration>
 					<classifier>mule-application</classifier>
+					<additionalPluginDependencies>
+						<plugin>
+							<groupId>cloud.anypoint</groupId>
+							<artifactId>mule-vectors-connector</artifactId>
+							<additionalDependencies>
+								<dependency>
+									<groupId>dev.langchain4j</groupId>
+									<artifactId>langchain4j-open-ai</artifactId>
+									<version>${langchain4jVersion}</version>
+								</dependency>
+								<dependency>
+									<groupId>dev.langchain4j</groupId>
+									<artifactId>langchain4j-milvus</artifactId>
+									<version>${langchain4jVersion}</version>
+								</dependency>
+							</additionalDependencies>
+						</plugin>
+					</additionalPluginDependencies>
 				</configuration>
 			</plugin>
 			<plugin>
@@ -55,6 +74,13 @@
 		</plugins>
 	</build>
 	<dependencies>
+		<dependency>
+			<groupId>ae6d7954-6fc2-4f3e-8777-80ff8aabd859</groupId>
+			<artifactId>speedway-domain</artifactId>
+			<version>1.0.1</version>
+			<classifier>mule-domain</classifier>
+			<scope>provided</scope>
+		</dependency>
 		<dependency>
 			<groupId>org.mule.modules</groupId>
 			<artifactId>mule-validation-module</artifactId>
@@ -143,17 +169,16 @@
 		</dependency>
 		<dependency>
 			<groupId>ae6d7954-6fc2-4f3e-8777-80ff8aabd859</groupId>
-			<artifactId>speedway-domain</artifactId>
-			<version>1.0.0</version>
-			<classifier>mule-domain</classifier>
-			<scope>provided</scope>
-		</dependency>
-		<dependency>
-			<groupId>ae6d7954-6fc2-4f3e-8777-80ff8aabd859</groupId>
 			<artifactId>scorekeeper-system-api</artifactId>
 			<version>2.0.6</version>
 			<classifier>raml</classifier>
 			<type>zip</type>
+		</dependency>
+		<dependency>
+			<groupId>cloud.anypoint</groupId>
+			<artifactId>mule-vectors-connector</artifactId>
+			<version>0.3.10.3</version>
+			<classifier>mule-plugin</classifier>
 		</dependency>
 	</dependencies>
 	<repositories>

@@ -1,0 +1,1 @@
+Given these sample articles, generate a realistic article about the same topic.  Your article should be provided in the same JSON format as the samples.  It should reveal the author's strong bias #[vars.bias] one of the people mentioned because that person #[vars.biasReason]

@@ -1,0 +1,7 @@
+%dw 2.0
+
+type auto_2fdeb8d5_e4e7_46cb_a14f_1bda80c50986_Output_Variables_llmResponse = {
+  response?: String, 
+  _?: Any
+}
+

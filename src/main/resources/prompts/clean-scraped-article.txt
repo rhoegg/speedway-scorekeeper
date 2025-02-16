@@ -1,0 +1,1 @@
+Remove all the extraneous web scraping text and just give me the actual article from this text, without any formatting, with the title on its own line at the top:

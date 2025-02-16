@@ -1,0 +1,4 @@
+%dw 2.0
+
+type auto_4c43582b_082e_421d_afbb_41c61a5f222b_Input_Variables_milvusToken = String | Null
+
