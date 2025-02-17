@@ -160,15 +160,13 @@ read(payload, "application/json")]]></ee:set-payload>
 		</parallel-foreach>
 	</sub-flow>
 	<sub-flow name="generateBiasedArticle" doc:id="29975eee-082b-4986-bc76-f7dce1dac87e">
-		<set-variable value='#[["in favor of", "against"][randomInt(2)]]' doc:name="bias" doc:id="2d20ea36-9c58-4432-9585-8166f0b5ae70" variableName="bias"/>
-		<set-variable value="#[[&quot;listens to classic rock&quot;, &quot;eats reese's pieces&quot;, &quot;watches anime on weekends&quot;, &quot;has a pet tortoise&quot;][randomInt(4)]]" doc:name="biasReason" doc:id="b492ff39-7cf2-4cd0-9eb5-e3aa34bcf3df" variableName="biasReason"/>
+		<logger level="INFO" doc:name="Logger" doc:id="4c66638d-6b45-40d3-9a53-fd1c5331a32b" message="generating with bias #[vars.bias] #[vars.biasReason]"/>
 		<parse-template doc:name="generate-biased-article.txt" doc:id="22f12af4-9ea2-46b3-8420-63cf7304c28a" location="prompts/generate-biased-article.txt" target="prompt"/>
 		<ms-aichain:chat-answer-prompt doc:name="Chat answer prompt" doc:id="461e20c2-5db2-4f1b-8a81-883c6d5e4bcc" config-ref="domainOpenAIMacConfig">
 					<ms-aichain:prompt><![CDATA[#[vars.prompt ++ "\n" ++ write(payload.similar, "application/json")]]]></ms-aichain:prompt>
 				</ms-aichain:chat-answer-prompt>
 	</sub-flow>
-	<flow name="generateChallengeArticles" doc:id="2d37881a-f492-41f3-837e-7276b6b9e9cb" >
-		<azure-key-vault:get-secret doc:name="milvusToken" doc:id="91a65dac-6472-4ec6-ac46-7287f9f663c2" config-ref="Azure_Key_Vault_Config" name="milvus-token" target="milvusToken" targetValue="#[payload.value]"/>
+	<sub-flow name="generateChallengeArticles" doc:id="2d37881a-f492-41f3-837e-7276b6b9e9cb" >
 		<flow-ref doc:name="getBaseArticle" doc:id="de338898-829c-4796-b778-c65fe1c21f00" name="getBaseArticle" />
 		<flow-ref doc:name="fetchSimilarArticles" doc:id="8762821a-84d3-4e15-963f-060d82b37b96" name="fetchSimilarArticles" target="similar"/>
 		<ee:transform doc:name="Transform Message" doc:id="8fda47c0-a68c-4e9a-94e2-574bdbebfc44" >
@@ -184,6 +182,8 @@ var similar = vars.similar map $.payload
 ]]></ee:set-payload>
 			</ee:message>
 		</ee:transform>
+		<set-variable value='#[["in favor of", "against"][randomInt(2)]]' doc:name="bias" doc:id="2d20ea36-9c58-4432-9585-8166f0b5ae70" variableName="bias" />
+		<set-variable value="#[output text/plain&#10;var musicStyles = [&quot;classic rock&quot;, &quot;bluegrass&quot;, &quot;opera&quot;, &quot;showtunes&quot;, &quot;EDM&quot;, &quot;screamo&quot;]&#10;var snacks = [&quot;reese's pieces&quot;, &quot;chocolate&quot;, &quot;popcorn&quot;, &quot;beef jerky&quot;]&#10;var showTypes = [&quot;anime&quot;, &quot;star wars&quot;, &quot;HGTV&quot;, &quot;documentaries&quot;, &quot;celebrity news&quot;]&#10;var pets = [&quot;tortoise&quot;, &quot;gecko&quot;, &quot;bobcat&quot;, &quot;python&quot;, &quot;rabbit&quot;, &quot;falcon&quot;]&#10;var sportsTeams = [&quot;the Cincinatti Bengals&quot;, &quot;the OKC Thunder&quot;, &quot;the Baltomore Orioles&quot;, &quot;Manchester United&quot;, &quot;the Special Olympics&quot;, &quot;&quot;]&#10;&#10;fun music() = musicStyles[randomInt(sizeOf(musicStyles))]&#10;fun snack() = snacks[randomInt(sizeOf(snacks))]&#10;fun show() = showTypes[randomInt(sizeOf(showTypes))]&#10;fun pet() = pets[randomInt(sizeOf(pets))]&#10;fun sportsTeam() = sportsTeams[randomInt(sizeOf(sportsTeams))]&#10;---&#10;randomInt(5) match {&#10;	case 0 -&gt; &quot;listens to $(music())&quot;&#10;	case 1 -&gt; &quot;eats $(snack())&quot;&#10;	case 2 -&gt; &quot;watches $(show()) on weekends&quot;&#10;	case 3 -&gt; &quot;has a pet $(pet())&quot;&#10;	case 4 -&gt; &quot;is a big fan of $(sportsTeam())&quot;&#10;}]" doc:name="biasReason" doc:id="b492ff39-7cf2-4cd0-9eb5-e3aa34bcf3df" variableName="biasReason" />
 		<scatter-gather doc:name="Scatter-Gather" doc:id="a94fdee7-8f00-42d7-9b3e-40e90ca0f02b" target="newArticles">
 			<route >
 				<ms-aichain:chat-answer-prompt doc:name="generate normal article" doc:id="1a1a9303-9b8c-45ec-a77f-22ff05dfa9dc" config-ref="domainOpenAIMacConfig">
@@ -197,27 +197,46 @@ var similar = vars.similar map $.payload
 		<ee:transform doc:name="Transform Message" doc:id="10482d7c-812d-48ba-b1ec-c1c527763836" >
 			<ee:message >
 				<ee:set-payload ><![CDATA[%dw 2.0
+import take from dw::core::Arrays
 import substring from dw::core::Strings
 output application/json
 
-fun readLlmArticle(llmText) = do {
+type Article = {
+	title: String,
+	url: String,
+	cleaned: String
+}
+fun readLlmArticle(llmText): Article = do {
 	var jsonStart = llmText indexOf '{'
 	var jsonEnd = llmText lastIndexOf '}'
 	---
-	read(substring(llmText, jsonStart, jsonEnd + 1), "application/json")
+	read(substring(llmText, jsonStart, jsonEnd + 1), "application/json") as Article
 }
 
 var llmArticle1 = readLlmArticle(vars.newArticles.'0'.payload.response)
-var llmArticle2 = readLlmArticle(vars.newArticles.'1'.payload.response)
+var llmArticleBiased = readLlmArticle(vars.newArticles.'1'.payload.response)
+
+var realArticles = payload.base >> ((payload.similar orderBy random()) take 2)
 ---
-payload ++ {
-	new: [
-		{normal: llmArticle1},
-		{biased: llmArticle2}
-	]
+{
+	generated: [
+		{
+			title: llmArticle1.title,
+			content: llmArticle1.cleaned
+		},
+		{
+			title: llmArticleBiased.title,
+			content: llmArticleBiased.cleaned,
+			bias: vars.biasReason,
+			biasType: if (vars.bias == "in favor of") "positive" else "negative"
+		}
+	],
+	real: realArticles map (article) -> {
+		title: article.title,
+		content: article.cleaned
+	}
 }]]></ee:set-payload>
 			</ee:message>
 		</ee:transform>
-		<logger level="INFO" doc:name="Logger" doc:id="73577b7e-a002-4704-b7fa-2dfab04efc0b" message="#[output application/json --- payload]" />
-	</flow>
+	</sub-flow>
 </mule>

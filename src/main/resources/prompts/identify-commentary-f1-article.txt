@@ -1,1 +1,13 @@
-Identify whether this article contains an opinion and is related to Formula One or Grand Prix racing. Opinion-based articles often contain subjective language such as evaluations, critiques, or personal assessments of races, drivers, teams, or events. Look for phrases like 'I believe', 'in my opinion', 'critics say', 'experts argue', or comparisons between drivers or teams. Articles focused solely on event results, statistics, or race outcomes without personal commentary or analysis should be classified as factual.  Respond with a boolean value only.
+Identify whether this article both:
+
+1. Is related to Formula One or Grand Prix racing
+2. Contains any subjective or interpretive content such as personal commentary, analysis, critiques, or opinions about drivers, teams, races, or events.
+
+Subjective content can include—but is not limited to—phrases like “I believe,” “in my opinion,” or “critics say,” as well as more subtle evaluative language (e.g., describing a driver’s performance as “underwhelming,” “superb,” “controversial,” etc.). It may also include comparisons, predictions, or speculation (“Team X may struggle,” “Driver Y is poised to dominate”), or references to expert commentary (“experts argue,” “observers note,” “fans believe”).
+
+Articles that only present facts, results, schedules, statistics, standings, or quotes without further interpretation should be classified as factual rather than opinion-based.
+
+After analyzing the article, respond with a single boolean value:
+
+true if the article is about Formula One/Grand Prix racing and contains at least some subjective or interpretive commentary.
+false otherwise.

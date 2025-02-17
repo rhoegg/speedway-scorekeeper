@@ -22,14 +22,14 @@ http://www.mulesoft.org/schema/mule/azure-key-vault http://www.mulesoft.org/sche
 		<whisperer:open-ai-connection apiKey="${openai.apikey}" />
 	</whisperer:config>
 	<global-property doc:name="Global Property" doc:id="18beaf80-1249-4cf0-b38c-c0a44b9e3c1a" name="openai.apikey" value="${OPENAI_API_KEY}" />
-	<ms-vectors:store-config name="MuleSoft_Vectors_Connector_Store_config" doc:name="MuleSoft Vectors Connector Store config" doc:id="3e057a65-268f-4f91-bed8-75260f79e0d8" >
-		<ms-vectors:milvus-connection url="https://${milvus.host}" token="${milvus.token}"/>
-	</ms-vectors:store-config>
 	<http:request-config name="zillizHttpRequestConfig" doc:name="HTTP Request configuration" doc:id="14beaa00-5cf3-4e13-bb27-7d37f445b11a" basePath="/v2/vectordb">
 		<http:request-connection protocol="HTTPS" host="${milvus.host}" port="443"/>
 		<http:default-headers >
 			<http:default-header key="Authorization" value='Bearer ${milvus.token}' />
 		</http:default-headers>
 	</http:request-config>
+	<ms-vectors:store-config name="MuleSoft_Vectors_Connector_Store_config" doc:name="MuleSoft Vectors Connector Store config" doc:id="427504a4-d687-4850-965a-2888b7f7e075" >
+		<ms-vectors:milvus-connection url="https://${milvus.host}" token="${milvus.token}" />
+	</ms-vectors:store-config>
 
 </mule>
