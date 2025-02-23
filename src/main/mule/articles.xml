@@ -160,18 +160,18 @@ read(payload, "application/json")]]></ee:set-payload>
 		</parallel-foreach>
 	</sub-flow>
 	<sub-flow name="generateBiasedArticle" doc:id="29975eee-082b-4986-bc76-f7dce1dac87e">
-		<logger level="INFO" doc:name="Logger" doc:id="4c66638d-6b45-40d3-9a53-fd1c5331a32b" message="generating with bias #[vars.bias] #[vars.biasReason]"/>
-		<parse-template doc:name="generate-biased-article.txt" doc:id="22f12af4-9ea2-46b3-8420-63cf7304c28a" location="prompts/generate-biased-article.txt" target="prompt"/>
+		<logger level="INFO" doc:name="Logger" doc:id="4c66638d-6b45-40d3-9a53-fd1c5331a32b" message="generating with bias #[vars.bias] #[vars.biasReason]" />
+		<parse-template doc:name="generate-biased-article.txt" doc:id="22f12af4-9ea2-46b3-8420-63cf7304c28a" location="prompts/generate-biased-article.txt" target="prompt" />
 		<ms-aichain:chat-answer-prompt doc:name="Chat answer prompt" doc:id="461e20c2-5db2-4f1b-8a81-883c6d5e4bcc" config-ref="domainOpenAIMacConfig">
 					<ms-aichain:prompt><![CDATA[#[vars.prompt ++ "\n" ++ write(payload.similar, "application/json")]]]></ms-aichain:prompt>
 				</ms-aichain:chat-answer-prompt>
 	</sub-flow>
-	<sub-flow name="generateChallengeArticles" doc:id="2d37881a-f492-41f3-837e-7276b6b9e9cb" >
+	<sub-flow name="generateChallengeArticles" doc:id="2d37881a-f492-41f3-837e-7276b6b9e9cb">
 		<flow-ref doc:name="getBaseArticle" doc:id="de338898-829c-4796-b778-c65fe1c21f00" name="getBaseArticle" />
-		<flow-ref doc:name="fetchSimilarArticles" doc:id="8762821a-84d3-4e15-963f-060d82b37b96" name="fetchSimilarArticles" target="similar"/>
-		<ee:transform doc:name="Transform Message" doc:id="8fda47c0-a68c-4e9a-94e2-574bdbebfc44" >
-			<ee:message >
-				<ee:set-payload ><![CDATA[%dw 2.0
+		<flow-ref doc:name="fetchSimilarArticles" doc:id="8762821a-84d3-4e15-963f-060d82b37b96" name="fetchSimilarArticles" target="similar" />
+		<ee:transform doc:name="Transform Message" doc:id="8fda47c0-a68c-4e9a-94e2-574bdbebfc44">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
 output application/json
 var similar = vars.similar map $.payload
 ---
@@ -185,18 +185,18 @@ var similar = vars.similar map $.payload
 		<set-variable value='#[["in favor of", "against"][randomInt(2)]]' doc:name="bias" doc:id="2d20ea36-9c58-4432-9585-8166f0b5ae70" variableName="bias" />
 		<set-variable value="#[output text/plain&#10;var musicStyles = [&quot;classic rock&quot;, &quot;bluegrass&quot;, &quot;opera&quot;, &quot;showtunes&quot;, &quot;EDM&quot;, &quot;screamo&quot;]&#10;var snacks = [&quot;reese's pieces&quot;, &quot;chocolate&quot;, &quot;popcorn&quot;, &quot;beef jerky&quot;]&#10;var showTypes = [&quot;anime&quot;, &quot;star wars&quot;, &quot;HGTV&quot;, &quot;documentaries&quot;, &quot;celebrity news&quot;]&#10;var pets = [&quot;tortoise&quot;, &quot;gecko&quot;, &quot;bobcat&quot;, &quot;python&quot;, &quot;rabbit&quot;, &quot;falcon&quot;, &quot;hammerhead shark&quot;]&#10;var sportsTeams = [&quot;the Cincinatti Bengals&quot;, &quot;the OKC Thunder&quot;, &quot;the Baltimore Orioles&quot;, &quot;Manchester United&quot;, &quot;the Special Olympics&quot;, &quot;Paddy Pimblett&quot;]&#10;&#10;fun music() = musicStyles[randomInt(sizeOf(musicStyles))]&#10;fun snack() = snacks[randomInt(sizeOf(snacks))]&#10;fun show() = showTypes[randomInt(sizeOf(showTypes))]&#10;fun pet() = pets[randomInt(sizeOf(pets))]&#10;fun sportsTeam() = sportsTeams[randomInt(sizeOf(sportsTeams))]&#10;---&#10;randomInt(5) match {&#10;	case 0 -&gt; &quot;listens to $(music())&quot;&#10;	case 1 -&gt; &quot;eats $(snack())&quot;&#10;	case 2 -&gt; &quot;watches $(show()) on weekends&quot;&#10;	case 3 -&gt; &quot;has a pet $(pet())&quot;&#10;	case 4 -&gt; &quot;enthusiastically supports $(sportsTeam())&quot;&#10;}]" doc:name="biasReason" doc:id="b492ff39-7cf2-4cd0-9eb5-e3aa34bcf3df" variableName="biasReason" />
 		<scatter-gather doc:name="Scatter-Gather" doc:id="a94fdee7-8f00-42d7-9b3e-40e90ca0f02b" target="newArticles">
-			<route >
+			<route>
 				<ms-aichain:chat-answer-prompt doc:name="generate normal article" doc:id="1a1a9303-9b8c-45ec-a77f-22ff05dfa9dc" config-ref="domainOpenAIMacConfig">
-					<ms-aichain:prompt ><![CDATA[#[readUrl("classpath://prompts/generate-new-article.txt", "text/plain") ++ "\n" ++ write(payload.similar, "application/json")]]]></ms-aichain:prompt>
+					<ms-aichain:prompt><![CDATA[#[readUrl("classpath://prompts/generate-new-article.txt", "text/plain") ++ "\n" ++ write(payload.similar, "application/json")]]]></ms-aichain:prompt>
 				</ms-aichain:chat-answer-prompt>
 			</route>
 			<route>
 				<flow-ref doc:name="generateBiasedArticle" doc:id="48eb49a0-f280-4a1a-91b9-978cc7174a99" name="generateBiasedArticle" />
 			</route>
 		</scatter-gather>
-		<ee:transform doc:name="Transform Message" doc:id="10482d7c-812d-48ba-b1ec-c1c527763836" >
-			<ee:message >
-				<ee:set-payload ><![CDATA[%dw 2.0
+		<ee:transform doc:name="Transform Message" doc:id="10482d7c-812d-48ba-b1ec-c1c527763836">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
 import take from dw::core::Arrays
 import substring from dw::core::Strings
 output application/json
@@ -234,6 +234,68 @@ var realArticles = payload.base >> ((payload.similar orderBy random()) take 2)
 	real: realArticles map (article) -> {
 		title: article.title,
 		content: article.cleaned
+	}
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</sub-flow>
+	<sub-flow name="computeBiasDetectionScore" doc:id="807b694d-dd12-4bd8-b2e2-cf2fde5f549e">
+		<ee:transform doc:name="score" doc:id="5327a631-98a0-4aab-82b6-87869308996a">
+			<ee:message>
+			</ee:message>
+			<ee:variables>
+				<ee:set-variable variableName="score"><![CDATA[%dw 2.0
+output application/java
+var racerAnswer = payload.biasedArticle
+---
+if (racerAnswer.title != vars.biasedArticle.title) 0
+else if (racerAnswer."type" != vars.biasedArticle.biasType) 1
+else 2 // identified the correct article and the bias type]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<choice doc:name="Choice" doc:id="ea05ac62-3511-4a82-89ab-401c9387f0b2">
+			<when expression="#[vars.score == 2]">
+				<parse-template doc:name="prompt" doc:id="de79048a-d085-455c-8d13-bfb0315d5015" location="prompts/check-racer-bias-reason.txt" target="prompt" />
+				<ms-aichain:chat-answer-prompt doc:name="check racer bias reason" doc:id="1ae4c176-5e94-4de9-9f3f-e804ffece690" config-ref="domainOpenAIMacConfig" target="llmResponse">
+					<ms-aichain:prompt ><![CDATA[#[vars.prompt]]]></ms-aichain:prompt>
+				</ms-aichain:chat-answer-prompt>
+				<logger level="DEBUG" doc:name="DEBUG" doc:id="72562a77-9aa2-4fbd-bffa-0806c2596175" message='#[output text/plain --- "prompt: $(vars.prompt)\nresponse:$(vars.llmResponse.response)"]' category="scorekeeper-sapi.articles.check-bias"/>
+				<set-variable value='#[if (lower(vars.llmResponse.response) == "true") 3 else 2]' doc:name="score" doc:id="fbdb5e26-8727-42ac-8142-664f05fbe78a" variableName="score"/>
+			</when>
+			<otherwise>
+				<logger level="TRACE" doc:name="TRACE" doc:id="58b5593a-d9a0-4049-af49-83e7497426b2" category="scorekeeper-sapi.articles.check-bias" />
+			</otherwise>
+		</choice>
+	</sub-flow>
+	<sub-flow name="checkRacerArticleBiasDetection" doc:id="5fb71920-3c40-49af-a7e7-edb5a5006014">
+		<set-variable value="#[payload.endpoint]" doc:name="endpoint" doc:id="ea457e34-8d2f-4426-b7f6-94ea91e2d013" variableName="endpoint"/>
+		<set-variable value="#[payload.timeout]" doc:name="timeout" doc:id="a5963df5-f927-474d-9501-f23b20e8b3d7" variableName="timeout"/>
+		<set-variable value="#[import firstWith from dw::core::Arrays&#10;---&#10;(payload.articles.generated firstWith (article) -&gt;&#10;	not isEmpty(article.bias)) as {&#10;		title: String,&#10;		content: String,&#10;		biasType: String,&#10;		bias: String&#10;	}]" doc:name="biasedArticle" doc:id="9d0d2a98-eefd-4d06-becc-0bfb8738b787" variableName="biasedArticle"/>
+		<ee:transform doc:name="racer request">
+            <ee:message>
+                <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+((payload.articles.generated ++ payload.articles.real) orderBy random()) map (article) -> {
+	title: article.title,
+	content: article.content
+}]]></ee:set-payload>
+            </ee:message>
+        </ee:transform>
+		<http:request method="POST" doc:name="POST /bias-detection/articles" doc:id="0a164e0b-2abf-43f6-a577-e105be4cece8" url='#["$(vars.endpoint)/bias-detection/articles"]'/>
+		<logger level="INFO" doc:name="Logger" doc:id="359fe69a-da2b-41b4-b4ef-1835293a66ec" message="#[payload]"/>
+		<flow-ref doc:name="computeBiasDetectionScore" doc:id="b25ab0e6-36a5-41bb-81bb-4cfd538ff8c0" name="computeBiasDetectionScore" />
+		<ee:transform doc:name="API response" doc:id="f4fe9c04-78d6-4bf5-a9fd-0d4159b9d24e" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	score: vars.score,
+	identifiedArticle: {
+		title: payload.biasedArticle.title,
+		biasType: payload.biasedArticle."type",
+		reason: payload.biasedArticle.reason
 	}
 }]]></ee:set-payload>
 			</ee:message>

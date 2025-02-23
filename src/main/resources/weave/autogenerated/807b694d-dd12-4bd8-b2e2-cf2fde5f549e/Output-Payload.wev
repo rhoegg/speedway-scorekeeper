@@ -1,0 +1,13 @@
+%dw 2.0
+
+type auto_807b694d_dd12_4bd8_b2e2_cf2fde5f549e_Output_Payload = {
+  score: Number, 
+  identifiedArticle: {
+    reason: String, 
+    biasType: "negative" | "positive", 
+    index: Number, 
+    _?: Any
+  } {"description": "The racer API's response information"}, 
+  _?: Any
+}
+

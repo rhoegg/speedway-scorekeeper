@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <mule xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:tls="http://www.mulesoft.org/schema/mule/tls" xmlns:whisperer="http://www.mulesoft.org/schema/mule/whisperer" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd  http://www.mulesoft.org/schema/mule/whisperer http://www.mulesoft.org/schema/mule/whisperer/current/mule-whisperer.xsd http://www.mulesoft.org/schema/mule/tls http://www.mulesoft.org/schema/mule/tls/current/mule-tls.xsd">
-    <apikit:config name="scorekeeper-system-api-config" api="resource::ae6d7954-6fc2-4f3e-8777-80ff8aabd859:scorekeeper-system-api:2.1.1:raml:zip:scorekeeper-system-api.raml" outboundHeadersMapName="outboundHeaders" httpStatusVarName="httpStatus" />
+    <apikit:config name="scorekeeper-system-api-config" api="resource::ae6d7954-6fc2-4f3e-8777-80ff8aabd859:scorekeeper-system-api:2.1.2:raml:zip:scorekeeper-system-api.raml" outboundHeadersMapName="outboundHeaders" httpStatusVarName="httpStatus" />
     <flow name="scorekeeper-system-api-main">
         <http:listener config-ref="domainHttpListenerConfig" path="/scorekeeper-sapi/*">
             <http:response statusCode="#[vars.httpStatus default 200]">
@@ -273,17 +273,7 @@ output application/java
     <flow name="get:\evaluate\article-bias:scorekeeper-system-api-config">
         <flow-ref doc:name="generateChallengeArticles" doc:id="2eb6fd7f-7b2a-47ee-941d-a73dba9fafbd" name="generateChallengeArticles" />
     </flow>
-    <flow name="post:\evaluate\article-bias:application\json:scorekeeper-system-api-config">
-        <ee:transform doc:name="Transform Message">
-            <ee:message>
-                <ee:set-payload><![CDATA[%dw 2.0
-output application/json
----
-{
-  error: "Unable to process racer response",
-  details: "Invalid response format from racer endpoint - expected article identification and bias analysis"
-} as Object {encoding: "UTF-8", mediaType: "application/json"}]]></ee:set-payload>
-            </ee:message>
-        </ee:transform>
+    <flow name="post:\evaluate\article-bias:application\json:scorekeeper-system-api-config" doc:id="b7998177-e509-4f6c-9ff4-b133585ca1bc">
+        <flow-ref doc:name="checkRacerArticleBiasDetection" doc:id="a1670ef8-c95f-4ce9-8f25-b0797f4f7eb0" name="checkRacerArticleBiasDetection" />
     </flow>
 </mule>

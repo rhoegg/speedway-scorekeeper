@@ -1,0 +1,6 @@
+You are given a user input that describes a situation related to a specific bias. Your task is to evaluate whether the user correctly identifies the presence of a bias in the situation, regardless of whether the bias is expressed as positive or negative. If the user’s input correctly identifies or implies a bias (e.g., exaggeration, favoritism, unfairness, stereotyping), respond with "true". If the user’s input does not correctly identify or imply a bias, respond with "false".
+
+Bias Context: #[vars.biasedArticle.bias]  
+User Input: #[payload.biasedArticle.reason]
+
+Please respond with "true" or "false" based on whether the user correctly identifies the bias in the context.

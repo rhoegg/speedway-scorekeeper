@@ -1,0 +1,10 @@
+%dw 2.0
+
+type auto_807b694d_dd12_4bd8_b2e2_cf2fde5f549e_Output_Variables_biasedArticle = {
+  bias?: String, 
+  biasType?: "negative" | "positive", 
+  title: String, 
+  content: String, 
+  _?: Any
+}
+
