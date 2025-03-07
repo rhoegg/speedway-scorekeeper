@@ -78,6 +78,7 @@ rawResults map (row) -> {
 		<whisperer:speech-to-text doc:name="transcribedAnswer" doc:id="e14714d6-da4d-4c69-a3bb-36c0cb447110" config-ref="MAC_Whisperer_Config" target="transcribedAnswer">
 			<whisperer:audio-content ><![CDATA[#[vars.racerAnswer]]]></whisperer:audio-content>
 		</whisperer:speech-to-text>
+		<logger level="INFO" doc:name="Logger" doc:id="5c10525b-19f4-45d4-84ff-c00e2c2f69c2" message="The transcribed answer is #[vars.transcribedAnswer]"/>
 		<ee:transform doc:name="response JSON" doc:id="99779862-f445-479e-aec2-820bfd8ea546" >
 			<ee:message >
 				<ee:set-payload ><![CDATA[%dw 2.0
@@ -88,11 +89,12 @@ var actualAnswer = lower(trim(vars.transcribedAnswer remove "."))
 var distance = levenshteinDistance(expectedAnswer, actualAnswer)
 ---
 {
-	score: if (distance < 3) 1 else 0,
+	score: if (distance < 5) 1 else 0,
 	responseTranscription: vars.transcribedAnswer
 }]]></ee:set-payload>
 			</ee:message>
 		</ee:transform>
+		<logger level="INFO" doc:name="Logger" doc:id="e593682c-8e8c-4979-9ebd-1482f7251091" message="Racer score and answer is #[payload]"/>
 	</sub-flow>
 	<flow name="speakQuestion" doc:id="02bea8a9-5d18-46b0-8545-32a7a56319a2" maxConcurrency="1">
 		<ee:cache doc:name="Cache" doc:id="13773438-36e7-45f9-b203-05cb39feeaec" cachingStrategy-ref="speechCachingStrategy">

@@ -300,5 +300,6 @@ output application/json
 }]]></ee:set-payload>
 			</ee:message>
 		</ee:transform>
+		<logger level="INFO" doc:name="Logger" doc:id="3d629d82-cd8d-4382-bc8e-2294707ae04e" message="Score for bias received was #[payload]"/>
 	</sub-flow>
 </mule>
