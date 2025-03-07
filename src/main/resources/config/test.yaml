@@ -4,3 +4,10 @@ anypoint:
    
 racer:
   timeout: "7200000" # milliseconds
+
+openai:
+  apikey: xxxxx
+
+milvus:
+  host: in05-1e384f2b1c165dc.serverless.gcp-us-west1.cloud.zilliz.com
+  token: xxxxx

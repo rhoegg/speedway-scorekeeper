@@ -183,7 +183,9 @@ var similar = vars.similar map $.payload
 			</ee:message>
 		</ee:transform>
 		<set-variable value='#[["in favor of", "against"][randomInt(2)]]' doc:name="bias" doc:id="2d20ea36-9c58-4432-9585-8166f0b5ae70" variableName="bias" />
-		<set-variable value="#[output text/plain&#10;var musicStyles = [&quot;classic rock&quot;, &quot;bluegrass&quot;, &quot;opera&quot;, &quot;showtunes&quot;, &quot;EDM&quot;, &quot;screamo&quot;]&#10;var snacks = [&quot;reese's pieces&quot;, &quot;chocolate&quot;, &quot;popcorn&quot;, &quot;beef jerky&quot;]&#10;var showTypes = [&quot;anime&quot;, &quot;star wars&quot;, &quot;HGTV&quot;, &quot;documentaries&quot;, &quot;celebrity news&quot;]&#10;var pets = [&quot;tortoise&quot;, &quot;gecko&quot;, &quot;bobcat&quot;, &quot;python&quot;, &quot;rabbit&quot;, &quot;falcon&quot;, &quot;hammerhead shark&quot;]&#10;var sportsTeams = [&quot;the Cincinatti Bengals&quot;, &quot;the OKC Thunder&quot;, &quot;the Baltimore Orioles&quot;, &quot;Manchester United&quot;, &quot;the Special Olympics&quot;, &quot;Paddy Pimblett&quot;]&#10;&#10;fun music() = musicStyles[randomInt(sizeOf(musicStyles))]&#10;fun snack() = snacks[randomInt(sizeOf(snacks))]&#10;fun show() = showTypes[randomInt(sizeOf(showTypes))]&#10;fun pet() = pets[randomInt(sizeOf(pets))]&#10;fun sportsTeam() = sportsTeams[randomInt(sizeOf(sportsTeams))]&#10;---&#10;randomInt(5) match {&#10;	case 0 -&gt; &quot;listens to $(music())&quot;&#10;	case 1 -&gt; &quot;eats $(snack())&quot;&#10;	case 2 -&gt; &quot;watches $(show()) on weekends&quot;&#10;	case 3 -&gt; &quot;has a pet $(pet())&quot;&#10;	case 4 -&gt; &quot;enthusiastically supports $(sportsTeam())&quot;&#10;}]" doc:name="biasReason" doc:id="b492ff39-7cf2-4cd0-9eb5-e3aa34bcf3df" variableName="biasReason" />
+		<set-variable value="#[output text/plain
+var musicStyles = [&quot;classic rock&quot;, &quot;bluegrass&quot;, &quot;opera&quot;, &quot;showtunes&quot;, &quot;EDM&quot;, &quot;screamo&quot;]
+var snacks = [&quot;reese's pieces&quot;, &quot;chocolate&quot;, &quot;popcorn&quot;, &quot;beef jerky&quot;]&#10;var showTypes = [&quot;anime&quot;, &quot;star wars&quot;, &quot;HGTV&quot;, &quot;documentaries&quot;, &quot;celebrity news&quot;]&#10;var pets = [&quot;tortoise&quot;, &quot;gecko&quot;, &quot;bobcat&quot;, &quot;python&quot;, &quot;rabbit&quot;, &quot;falcon&quot;, &quot;hammerhead shark&quot;]&#10;var sportsTeams = [&quot;the Cincinatti Bengals&quot;, &quot;the OKC Thunder&quot;, &quot;the Baltimore Orioles&quot;, &quot;Manchester United&quot;, &quot;the Special Olympics&quot;, &quot;Paddy Pimblett&quot;]&#10;&#10;fun music() = musicStyles[randomInt(sizeOf(musicStyles))]&#10;fun snack() = snacks[randomInt(sizeOf(snacks))]&#10;fun show() = showTypes[randomInt(sizeOf(showTypes))]&#10;fun pet() = pets[randomInt(sizeOf(pets))]&#10;fun sportsTeam() = sportsTeams[randomInt(sizeOf(sportsTeams))]&#10;---&#10;randomInt(5) match {&#10;	case 0 -&gt; &quot;listens to $(music())&quot;&#10;	case 1 -&gt; &quot;eats $(snack())&quot;&#10;	case 2 -&gt; &quot;watches $(show()) on weekends&quot;&#10;	case 3 -&gt; &quot;has a pet $(pet())&quot;&#10;	case 4 -&gt; &quot;enthusiastically supports $(sportsTeam())&quot;&#10;}]" doc:name="biasReason" doc:id="b492ff39-7cf2-4cd0-9eb5-e3aa34bcf3df" variableName="biasReason" />
 		<scatter-gather doc:name="Scatter-Gather" doc:id="a94fdee7-8f00-42d7-9b3e-40e90ca0f02b" target="newArticles">
 			<route>
 				<ms-aichain:chat-answer-prompt doc:name="generate normal article" doc:id="1a1a9303-9b8c-45ec-a77f-22ff05dfa9dc" config-ref="domainOpenAIMacConfig">
@@ -270,7 +272,15 @@ else 2 // identified the correct article and the bias type]]></ee:set-variable>
 	<sub-flow name="checkRacerArticleBiasDetection" doc:id="5fb71920-3c40-49af-a7e7-edb5a5006014">
 		<set-variable value="#[payload.endpoint]" doc:name="endpoint" doc:id="ea457e34-8d2f-4426-b7f6-94ea91e2d013" variableName="endpoint"/>
 		<set-variable value="#[payload.timeout]" doc:name="timeout" doc:id="a5963df5-f927-474d-9501-f23b20e8b3d7" variableName="timeout"/>
-		<set-variable value="#[import firstWith from dw::core::Arrays&#10;---&#10;(payload.articles.generated firstWith (article) -&gt;&#10;	not isEmpty(article.bias)) as {&#10;		title: String,&#10;		content: String,&#10;		biasType: String,&#10;		bias: String&#10;	}]" doc:name="biasedArticle" doc:id="9d0d2a98-eefd-4d06-becc-0bfb8738b787" variableName="biasedArticle"/>
+		<set-variable value="#[import firstWith from dw::core::Arrays
+---
+(payload.articles.generated firstWith (article) -&gt;
+	not isEmpty(article.bias)) as {
+		title: String,
+		content: String,
+		biasType: String,
+		bias: String
+	}]" doc:name="biasedArticle" doc:id="9d0d2a98-eefd-4d06-becc-0bfb8738b787" variableName="biasedArticle"/>
 		<ee:transform doc:name="racer request">
             <ee:message>
                 <ee:set-payload><![CDATA[%dw 2.0
