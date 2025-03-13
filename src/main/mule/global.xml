@@ -30,5 +30,4 @@ http://www.mulesoft.org/schema/mule/azure-key-vault http://www.mulesoft.org/sche
 	<ms-vectors:store-config name="MuleSoft_Vectors_Connector_Store_config" doc:name="MuleSoft Vectors Connector Store config" doc:id="427504a4-d687-4850-965a-2888b7f7e075" >
 		<ms-vectors:milvus-connection url="https://${milvus.host}" token="${milvus.token}" />
 	</ms-vectors:store-config>
-
 </mule>

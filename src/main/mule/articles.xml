@@ -70,7 +70,7 @@ segments joinBy " "]]></ee:set-payload>
 			<foreach doc:name="For Each" doc:id="864bc391-acb4-4f93-8c62-c36b5b6f0961" collection="#[(1 to 30)]">
 			<flow-ref doc:name="getRandomArticle" doc:id="bc3733f7-f1a1-43b1-8d98-b0ee4bed1888" name="getRandomArticle" />
 			<flow-ref doc:name="rebuildFullArticle" doc:id="91234ea0-32cc-42e7-9975-b54bd7379034" name="rebuildFullArticle" target="candidateArticle"/>
-			<ms-aichain:chat-answer-prompt doc:name="identify f1 article" doc:id="414eda29-bd54-492b-b9fc-38ac2a2c02d8" config-ref="domainOpenAIMacConfig" target="llmResponse">
+			<ms-aichain:chat-answer-prompt doc:name="identify f1 article" doc:id="414eda29-bd54-492b-b9fc-38ac2a2c02d8" target="llmResponse" config-ref="domainGroqMistralSabaMacConfig">
 					<ms-aichain:prompt><![CDATA[#[var prompt = readUrl("classpath://prompts/identify-commentary-f1-article.txt", "text/plain")
 var article = read(vars.candidateArticle, "application/json")
 ---
@@ -112,7 +112,7 @@ output application/json
 		</try>
 	</sub-flow>
 	<sub-flow name="cleanScrapedArticle" doc:id="2fdeb8d5-e4e7-46cb-a14f-1bda80c50986" >
-		<ms-aichain:chat-answer-prompt doc:name="Chat answer prompt" doc:id="881f5b70-64fb-4bbb-9718-1786a4d0d483" config-ref="domainOpenAIMacConfig" target="llmResponse">
+		<ms-aichain:chat-answer-prompt doc:name="Chat answer prompt" doc:id="881f5b70-64fb-4bbb-9718-1786a4d0d483" target="llmResponse" config-ref="domainGroqMistralSabaMacConfig">
 			<ms-aichain:prompt ><![CDATA[#[readUrl("classpath://prompts/clean-scraped-article.txt", "text/plain")
 ++ "\n"
 ++ write(payload, "application/json")]]]></ms-aichain:prompt>
@@ -162,7 +162,7 @@ read(payload, "application/json")]]></ee:set-payload>
 	<sub-flow name="generateBiasedArticle" doc:id="29975eee-082b-4986-bc76-f7dce1dac87e">
 		<logger level="INFO" doc:name="Logger" doc:id="4c66638d-6b45-40d3-9a53-fd1c5331a32b" message="generating with bias #[vars.bias] #[vars.biasReason]" />
 		<parse-template doc:name="generate-biased-article.txt" doc:id="22f12af4-9ea2-46b3-8420-63cf7304c28a" location="prompts/generate-biased-article.txt" target="prompt" />
-		<ms-aichain:chat-answer-prompt doc:name="Chat answer prompt" doc:id="461e20c2-5db2-4f1b-8a81-883c6d5e4bcc" config-ref="domainOpenAIMacConfig">
+		<ms-aichain:chat-answer-prompt doc:name="Chat answer prompt" doc:id="461e20c2-5db2-4f1b-8a81-883c6d5e4bcc" config-ref="domainGroqMistralSabaMacConfig">
 					<ms-aichain:prompt><![CDATA[#[vars.prompt ++ "\n" ++ write(payload.similar, "application/json")]]]></ms-aichain:prompt>
 				</ms-aichain:chat-answer-prompt>
 	</sub-flow>
@@ -188,12 +188,14 @@ var musicStyles = [&quot;classic rock&quot;, &quot;bluegrass&quot;, &quot;opera&
 var snacks = [&quot;reese's pieces&quot;, &quot;chocolate&quot;, &quot;popcorn&quot;, &quot;beef jerky&quot;]&#10;var showTypes = [&quot;anime&quot;, &quot;star wars&quot;, &quot;HGTV&quot;, &quot;documentaries&quot;, &quot;celebrity news&quot;]&#10;var pets = [&quot;tortoise&quot;, &quot;gecko&quot;, &quot;bobcat&quot;, &quot;python&quot;, &quot;rabbit&quot;, &quot;falcon&quot;, &quot;hammerhead shark&quot;]&#10;var sportsTeams = [&quot;the Cincinatti Bengals&quot;, &quot;the OKC Thunder&quot;, &quot;the Baltimore Orioles&quot;, &quot;Manchester United&quot;, &quot;the Special Olympics&quot;, &quot;Paddy Pimblett&quot;]&#10;&#10;fun music() = musicStyles[randomInt(sizeOf(musicStyles))]&#10;fun snack() = snacks[randomInt(sizeOf(snacks))]&#10;fun show() = showTypes[randomInt(sizeOf(showTypes))]&#10;fun pet() = pets[randomInt(sizeOf(pets))]&#10;fun sportsTeam() = sportsTeams[randomInt(sizeOf(sportsTeams))]&#10;---&#10;randomInt(5) match {&#10;	case 0 -&gt; &quot;listens to $(music())&quot;&#10;	case 1 -&gt; &quot;eats $(snack())&quot;&#10;	case 2 -&gt; &quot;watches $(show()) on weekends&quot;&#10;	case 3 -&gt; &quot;has a pet $(pet())&quot;&#10;	case 4 -&gt; &quot;enthusiastically supports $(sportsTeam())&quot;&#10;}]" doc:name="biasReason" doc:id="b492ff39-7cf2-4cd0-9eb5-e3aa34bcf3df" variableName="biasReason" />
 		<scatter-gather doc:name="Scatter-Gather" doc:id="a94fdee7-8f00-42d7-9b3e-40e90ca0f02b" target="newArticles">
 			<route>
-				<ms-aichain:chat-answer-prompt doc:name="generate normal article" doc:id="1a1a9303-9b8c-45ec-a77f-22ff05dfa9dc" config-ref="domainOpenAIMacConfig">
+				<ms-aichain:chat-answer-prompt doc:name="generate normal article" doc:id="1a1a9303-9b8c-45ec-a77f-22ff05dfa9dc" config-ref="domainGroqMistralSabaMacConfig">
 					<ms-aichain:prompt><![CDATA[#[readUrl("classpath://prompts/generate-new-article.txt", "text/plain") ++ "\n" ++ write(payload.similar, "application/json")]]]></ms-aichain:prompt>
 				</ms-aichain:chat-answer-prompt>
+				<logger level="INFO" doc:name="Logger" doc:id="386eceda-d530-4055-824a-c66abc69d0fa" message="#[payload]"/>
 			</route>
 			<route>
 				<flow-ref doc:name="generateBiasedArticle" doc:id="48eb49a0-f280-4a1a-91b9-978cc7174a99" name="generateBiasedArticle" />
+				<logger level="INFO" doc:name="Logger" doc:id="d311ec66-9ac1-4c38-b08b-2de0073dd250" message="#[payload]"/>
 			</route>
 		</scatter-gather>
 		<ee:transform doc:name="Transform Message" doc:id="10482d7c-812d-48ba-b1ec-c1c527763836">
@@ -205,7 +207,7 @@ output application/json
 
 type Article = {
 	title: String,
-	url: String,
+	url?: String,
 	cleaned: String
 }
 fun readLlmArticle(llmText): Article = do {
@@ -258,7 +260,7 @@ else 2 // identified the correct article and the bias type]]></ee:set-variable>
 		<choice doc:name="Choice" doc:id="ea05ac62-3511-4a82-89ab-401c9387f0b2">
 			<when expression="#[vars.score == 2]">
 				<parse-template doc:name="prompt" doc:id="de79048a-d085-455c-8d13-bfb0315d5015" location="prompts/check-racer-bias-reason.txt" target="prompt" />
-				<ms-aichain:chat-answer-prompt doc:name="check racer bias reason" doc:id="1ae4c176-5e94-4de9-9f3f-e804ffece690" config-ref="domainOpenAIMacConfig" target="llmResponse">
+				<ms-aichain:chat-answer-prompt doc:name="check racer bias reason" doc:id="1ae4c176-5e94-4de9-9f3f-e804ffece690" target="llmResponse" config-ref="domainGroqMistralSabaMacConfig">
 					<ms-aichain:prompt ><![CDATA[#[vars.prompt]]]></ms-aichain:prompt>
 				</ms-aichain:chat-answer-prompt>
 				<logger level="DEBUG" doc:name="DEBUG" doc:id="72562a77-9aa2-4fbd-bffa-0806c2596175" message='#[output text/plain --- "prompt: $(vars.prompt)\nresponse:$(vars.llmResponse.response)"]' category="scorekeeper-sapi.articles.check-bias"/>
