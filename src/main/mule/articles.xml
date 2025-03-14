@@ -242,6 +242,25 @@ var realArticles = payload.base >> ((payload.similar orderBy random()) take 2)
 }]]></ee:set-payload>
 			</ee:message>
 		</ee:transform>
+		<http:request method="POST" doc:name="Request" doc:id="0955bd5b-a9a2-406f-8108-bb3366a43bfe" config-ref="zillizHttpRequestConfig" url="https://${milvus.host}/v2/vectordb/entities/insert" target="articlesCacheResponse" >
+			<http:body ><![CDATA[#[output application/json
+---
+{
+  "collectionName": "articles_cache",
+  "data": [
+    {
+      "articles": payload,
+      "metadata": {
+      	"timestamp": (now() as Number) * 1000
+      },
+      "vector": [
+        0.00000,
+        0.00000
+      ]
+    }
+  ]
+}]]]></http:body>
+		</http:request>
 	</sub-flow>
 	<sub-flow name="computeBiasDetectionScore" doc:id="807b694d-dd12-4bd8-b2e2-cf2fde5f549e">
 		<ee:transform doc:name="score" doc:id="5327a631-98a0-4aab-82b6-87869308996a">
