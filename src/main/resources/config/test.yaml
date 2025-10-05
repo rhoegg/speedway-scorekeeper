@@ -11,3 +11,6 @@ openai:
 milvus:
   host: in05-1e384f2b1c165dc.serverless.gcp-us-west1.cloud.zilliz.com
   token: xxxxx
+
+articles:
+  ratio: "0.5"
