@@ -272,25 +272,22 @@ output application/java
         </error-handler>
     </flow>
     <flow name="get:\evaluate\article-bias:scorekeeper-system-api-config">
-		<ee:transform doc:name="Transform Message" doc:id="9f9262b7-b286-4690-bda0-f2294e64936d" >
-			<ee:message >
-				<ee:set-payload ><![CDATA[%dw 2.0
-output application/json
-var newArticle = random() > p("articles.ratio") as Number
----
-newArticle]]></ee:set-payload>
-			</ee:message>
-		</ee:transform>
-		<choice doc:name="Choice" doc:id="9a1b705b-5a2d-4f0a-ba5f-9ab6fbed4b2b" >
-			<when expression="payload == true">
-				<flow-ref doc:name="generateChallengeArticles" doc:id="2eb6fd7f-7b2a-47ee-941d-a73dba9fafbd" name="generateChallengeArticles" />
-				<logger level="INFO" doc:name="Logger" doc:id="0cd88d03-507a-4f86-9d46-63cbe1a84f67" message='#["New articles are being generated using AI"]'/>
-			</when>
-			<otherwise >
-				<flow-ref doc:name="cachedArticles" doc:id="250e1ddd-0d99-44f0-819a-1653d23f3f2e" name="cachedArticles" />
-				<logger level="INFO" doc:name="Logger" doc:id="229412dc-1e80-4717-b4df-66f19f528c83" message="Articles are being pulled from the cache"/>
-			</otherwise>
-		</choice>
+		<try doc:name="Try cache first" doc:id="9f9262b7-b286-4690-bda0-f2294e64936d" >
+			<flow-ref doc:name="cachedArticles" doc:id="250e1ddd-0d99-44f0-819a-1653d23f3f2e" name="cachedArticles" />
+			<logger level="INFO" doc:name="Logger" doc:id="229412dc-1e80-4717-b4df-66f19f528c83" message="Articles are being pulled from the cache"/>
+			<error-handler >
+				<on-error-continue enableNotifications="true" logException="true" doc:name="Fallback to generation on cache errors" doc:id="9a1b705b-5a2d-4f0a-ba5f-9ab6fbed4b2b" type="MULE:EXPRESSION" when='#[error.description contains "cache" or error.description contains "Cache"]'>
+					<logger level="WARN" doc:name="Log cache failure" doc:id="0cd88d03-507a-4f86-9d46-63cbe1a84f67" message='#["Cache retrieval failed: $(error.description), falling back to article generation"]'/>
+					<flow-ref doc:name="generateChallengeArticles" doc:id="2eb6fd7f-7b2a-47ee-941d-a73dba9fafbd" name="generateChallengeArticles" />
+					<logger level="INFO" doc:name="Logger" doc:id="229412dc-1e80-4717-b4df-66f19f528c84" message="New articles generated using AI after cache miss"/>
+				</on-error-continue>
+				<on-error-continue enableNotifications="true" logException="true" doc:name="Fallback to generation on HTTP errors" doc:id="9a1b705b-5a2d-4f0a-ba5f-9ab6fbed4b2c" type="HTTP:TIMEOUT, HTTP:CONNECTIVITY">
+					<logger level="WARN" doc:name="Log HTTP failure" doc:id="0cd88d03-507a-4f86-9d46-63cbe1a84f68" message='#["HTTP error accessing cache: $(error.description), falling back to article generation"]'/>
+					<flow-ref doc:name="generateChallengeArticles" doc:id="2eb6fd7f-7b2a-47ee-941d-a73dba9fafbd" name="generateChallengeArticles" />
+					<logger level="INFO" doc:name="Logger" doc:id="229412dc-1e80-4717-b4df-66f19f528c85" message="New articles generated using AI after HTTP error"/>
+				</on-error-continue>
+			</error-handler>
+		</try>
     </flow>
 	<flow name="post:\evaluate\article-bias:application\json:scorekeeper-system-api-config" doc:id="b7998177-e509-4f6c-9ff4-b133585ca1bc">
         <flow-ref doc:name="checkRacerArticleBiasDetection" doc:id="a1670ef8-c95f-4ce9-8f25-b0797f4f7eb0" name="checkRacerArticleBiasDetection" />

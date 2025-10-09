@@ -314,13 +314,14 @@ else 2 // identified the correct article and the bias type]]></ee:set-variable>
 			<ee:variables>
 				<ee:set-variable variableName="autoId"><![CDATA[%dw 2.0
 output application/json
-var cacheIds = payload.data.id
-
-fun randomId (arr: Array<Number>) = 
-arr[floor(random() * sizeOf(arr))]
+import isEmpty from dw::core::Arrays
+import fail from dw::Runtime
+var cacheIds = payload.data.id default []
 ---
-
-randomId(cacheIds)
+if (isEmpty(cacheIds))
+	fail("No cached articles found")
+else
+	cacheIds[floor(random() * sizeOf(cacheIds))]
 ]]></ee:set-variable>
 			</ee:variables>
 		</ee:transform>
@@ -335,12 +336,14 @@ randomId(cacheIds)
 		<ee:transform doc:name="Transform Message" doc:id="b9130a48-6680-47f4-ab59-dd734306308f">
 			<ee:message>
 				<ee:set-payload><![CDATA[%dw 2.0
-
 output application/json
-var articles = payload.data[0].articles
-
+import isEmpty from dw::core::Arrays
+import fail from dw::Runtime
 ---
-read(articles, "application/json")]]></ee:set-payload>
+if (isEmpty(payload.data))
+	fail("Cache query returned no results for ID $(vars.autoId)")
+else
+	read(payload.data[0].articles, "application/json")]]></ee:set-payload>
 			</ee:message>
 		</ee:transform>
 		<logger level="INFO" doc:name="Logger" doc:id="e8017b20-e720-4144-81c3-894189436043" message="#[payload]" />
