@@ -59,7 +59,7 @@
 		<dependency>
 			<groupId>ae6d7954-6fc2-4f3e-8777-80ff8aabd859</groupId>
 			<artifactId>speedway-domain</artifactId>
-			<version>1.0.4</version>
+			<version>1.0.5</version>
 			<classifier>mule-domain</classifier>
 			<scope>provided</scope>
 		</dependency>
